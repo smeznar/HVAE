@@ -29,7 +29,7 @@ class Node:
     def to_list(self, notation="infix"):
         if notation == "infix" and Node._symbols is None:
             raise Exception("To generate a list of token in the infix notation, symbol library is needed. Please use"
-                            "the Node.add_symbols methods to add them, before using the to_list method.")
+                            " the Node.add_symbols methods to add them, before using the to_list method.")
         left = [] if self.left is None else self.left.to_list(notation)
         right = [] if self.right is None else self.right.to_list(notation)
         if notation == "prefix":
@@ -51,6 +51,15 @@ class Node:
             return left + [self.symbol] + right
         else:
             raise Exception("Invalid notation selected. Use 'infix', 'prefix', 'postfix'.")
+
+    def to_pexpr(self):
+        if Node._symbols is None:
+            raise Exception("To generate a pexpr, symbol library is needed. Please use"
+                            " the Node.add_symbols methods to add them, before using the to_list method.")
+        left = [] if self.left is None else self.left.to_pexpr()
+        right = [] if self.right is None else self.right.to_pexpr()
+        return [Node._symbols[Node._s2c[self.symbol]]["psymbol"]] + left + right
+
 
     def add_target_vectors(self):
         if Node._symbols is None:
