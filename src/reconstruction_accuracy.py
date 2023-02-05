@@ -45,8 +45,8 @@ def one_experiment(name, trees, input_dim, latent_dim, epochs, batch_size, annea
         print()
     fm = [np.mean(d) for d in distances]
     with open("../results/hvae.txt", "a") as file:
-        file.write(f"{name}\t Mean: {np.mean(fm)}, Var: {np.var(fm)}, All: {', '.join([str(f) for f in fm])}")
-    print(f"Mean: {np.mean(fm)}, Var: {np.var(fm)}, All: {', '.join([str(f) for f in fm])}")
+        file.write(f"{name}\t Mean: {np.mean(fm)}, Std dev: {np.std(fm)}, All: {', '.join([str(f) for f in fm])}\n")
+    print(f"Mean: {np.mean(fm)}, Std dev: {np.std(fm)}, All: {', '.join([str(f) for f in fm])}")
     return fm
 
 

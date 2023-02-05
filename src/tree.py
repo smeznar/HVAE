@@ -55,7 +55,7 @@ class Node:
     def add_target_vectors(self):
         if Node._symbols is None:
             raise Exception("Encoding needs a symbol library to create target vectors. Please use Node.add_symbols"
-                            "method to add a symbol library to trees before encoding.")
+                            " method to add a symbol library to trees before encoding.")
         target = torch.zeros(len(Node._symbols)).float()
         target[Node._s2c[self.symbol]] = 1.0
         self.target = Variable(target[None, None, :])
