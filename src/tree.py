@@ -39,7 +39,7 @@ class Node:
         elif notation == "infix":
             if len(left) > 0 and len(right) == 0 and Node.symbol_precedence(self.symbol) > 0:
                 return [self.symbol] + ["("] + left + [")"]
-            elif len(left) > 0 and len(right) == 0 and Node.symbol_precedence(self.symbol) <= 0:
+            elif len(left) > 0 >= Node.symbol_precedence(self.symbol) and len(right) == 0:
                 return ["("] + left + [")"] + [self.symbol]
 
             if self.left is not None \
@@ -59,7 +59,6 @@ class Node:
         left = [] if self.left is None else self.left.to_pexpr()
         right = [] if self.right is None else self.right.to_pexpr()
         return [Node._symbols[Node._s2c[self.symbol]]["psymbol"]] + left + right
-
 
     def add_target_vectors(self):
         if Node._symbols is None:

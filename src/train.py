@@ -74,9 +74,9 @@ def train_hvae(model, trees, epochs=20, batch_size=32, annealing_iters=2800, ver
                                         'KLD': kl / num_trees})
                 prog_bar.update(batch_size)
 
-                iter_counter += 1
                 if iter_counter < annealing_iters:
                     lmbda = (np.tanh((iter_counter - 4500) / 1000) + 1) / 2
+                iter_counter += 1
 
                 if verbose and i == midpoint:
                     z = model.encode(trees[0])[0]

@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from src.fasteval.functions import create_tokens
 from src.fasteval.program import Program
 from src.fasteval.library import Library

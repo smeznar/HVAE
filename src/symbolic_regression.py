@@ -1,5 +1,7 @@
 import argparse
 import json
+import random
+import time
 
 import numpy as np
 import torch
@@ -17,25 +19,26 @@ from model import HVAE
 from fasteval.fasteval import FastEval
 
 
-def read_eq_data(eq_number):
+def read_eq_data(filename):
     train = []
-    test = []
-    with open(f"/home/sebastian/Downloads/Feynman_with_units/{eq_number}", "r") as file:
-        for i, row in enumerate(file):
-            line = [float(t) for t in row.strip().split(" ")]
-            if i < 10000:
-                train.append(line)
-            elif i < 20000:
-                test.append(line)
-            else:
-                break
-    return np.array(train), np.array(test)
+    with open(filename, "r") as file:
+        for line in file:
+            train.append([float(v) for v in line.strip().split(",")])
+    return np.array(train)
 
 
 def eval_vector(l, model, eval_obj):
-    tree = model.decode(l)
-    y_hat, constants = eval_obj.execute(tree)
-    error = np.sqrt(np.square(np.subtract(FastEval.X[:, -1], y_hat)).mean())
+    try:
+        tree = model.decode(l)
+        y_hat, constants = eval_obj.execute(tree)
+        if not all(np.isfinite(y_hat)):
+            error = 1e10
+            # print("INF")
+        else:
+            error = np.sqrt(np.square(np.subtract(FastEval.X[:, -1], y_hat)).mean())
+    except:
+        print("Recursion limit")
+        return 1e10, "", []
     return error, str(tree), constants
 
 
@@ -45,6 +48,7 @@ class SRProblem(ElementwiseProblem):
         self.eval_object = eval_object
         self.input_mean = torch.zeros(next(model.decoder.parameters()).size(0))
         self.best_f = 9e+50
+        self.best_expr = None
         self.models = dict()
         super().__init__(n_var=dim, n_obj=1)
 
@@ -53,7 +57,12 @@ class SRProblem(ElementwiseProblem):
         if expr in self.models:
             self.models[expr]["trees"] += 1
         else:
+            constants = [float(c) for c in constants]
             self.models[expr] = {"expr": expr, "error": error, "trees": 1, "const": constants}
+            if error < self.best_f:
+                self.best_f = error
+                self.best_expr = self.models[expr]
+                print(f"New best expression: {expr}, with constants [{','.join([str(c) for c in constants])}]")
         out["F"] = error
 
 
@@ -106,27 +115,40 @@ if __name__ == '__main__':
     parser.add_argument("-num_vars", default=2, type=int)
     parser.add_argument("-has_const", action="store_true")
     parser.add_argument("-latent", default=32, type=int)
-    parser.add_argument("-params")
+    parser.add_argument("-params", required=True)
+    parser.add_argument("-success_threshold", default=1e-8)
     parser.add_argument("-seed", type=int)
     args = parser.parse_args()
 
+
+    # -----------------------------------------------------------------------------------------------------------------
+    #
+    #                           WORK IN PROGRESS, USE SR SCRIPTS FROM ProGED
+    #           (https://github.com/smeznar/ProGED/blob/main/ProGED/examples/ng_bench.py)
+    #                                     TO EVALUATE THE RESULTS
+    #
+    # -----------------------------------------------------------------------------------------------------------------
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        random.seed(args.seed)
+
     # Read data
-    train, test = read_eq_data(args.dataset)
+    train = read_eq_data(args.dataset)
     symbols = generate_symbol_library(args.num_vars, args.symbols, args.has_const)
     input_dim = len(symbols)
     HVAE.add_symbols(symbols)
-    model = HVAE(input_dim, args.latent)
+    model = torch.load(args.params)
     fe = FastEval(train, args.num_vars, symbols, has_const=args.has_const)
 
     if args.baseline == "HVAE_evo":
         ga = GA(pop_size=200, sampling=TorchNormalSampling(), crossover=LICrossover(), mutation=RandomMutation(),
                 eliminate_duplicates=False)
         problem = SRProblem(model, fe, args.latent)
-        res = minimize(problem, ga, BestTermination(), verbose=True)
-        # with open(f"results/hvae_evo/nguyen_{args.eq_num}_{np.random.randint(0, 1000000)}.json", "w") as file:
-        #     for i in range(len(problem.models)):
-        #         problem.models[i]["trees"] = problem.evaluated_models[problem.models[i]["eq"]]
-        #     json.dump(problem.models, file)
+        res = minimize(problem, ga, BestTermination(min_f=args.success_threshold), verbose=True)
+        with open(f"../results/nguyen/{args.dataset.strip().split('/')[-1]}_{time.time()}.json", "w") as file:
+            json.dump({"best": problem.best_expr, "all": list(problem.models.values())}, file)
 
     # if args.baseline == "HVAE_random":
     #     fe = FastEval(train, args.num_vars, symbols, has_const=args.has_const)

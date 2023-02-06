@@ -104,21 +104,23 @@ class Decoder(nn.Module):
             if tree.right is not None:
                 self.recursive_forward(right, tree.right)
 
-    # Used for inference to generate expression trees from latent vectors
+    # Used for inference to generate expression trees from latent vectorS
     def decode(self, z, symbols):
-        hidden = self.z2h(z)
-        tree = self.recursive_decode(hidden, symbols)
-        return tree
+        with torch.no_grad():
+            hidden = self.z2h(z)
+            tree = self.recursive_decode(hidden, symbols)
+            return tree
 
     def recursive_decode(self, hidden, symbols):
         prediction = self.h2o(hidden)
         # Sample symbol in a given node
-        sampled, symbol, stype = Decoder.sample_symbol(prediction, symbols)
-        if stype is SymType.Fun:
+        sampled, symbol, stype = self.sample_symbol(prediction, symbols)
+        # print(symbol)
+        if stype.value is SymType.Fun.value:
             left, right = self.gru(sampled, hidden)
             l_tree = self.recursive_decode(left, symbols)
             r_tree = None
-        elif stype is SymType.Operator:
+        elif stype.value is SymType.Operator.value:
             left, right = self.gru(sampled, hidden)
             l_tree = self.recursive_decode(left, symbols)
             r_tree = self.recursive_decode(right, symbols)
@@ -127,8 +129,7 @@ class Decoder(nn.Module):
             r_tree = None
         return Node(symbol, right=r_tree, left=l_tree)
 
-    @staticmethod
-    def sample_symbol(prediction, symbol_dict):
+    def sample_symbol(self, prediction, symbol_dict):
         sampled = F.softmax(prediction, dim=2)
         # Select the symbol with the highest value ("probability")
         symbol = symbol_dict[torch.argmax(sampled).item()]
