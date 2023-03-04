@@ -12,11 +12,10 @@ def read_expressions(filepath):
     return expressions
 
 
-def read_json(filepath):
+def read_expressions_json(filepath):
     with open(filepath, "r") as file:
-        exprs = json.load(file)
-        trees = [Node.from_dict(d) for d in exprs]
-    return trees
+        return [Node.from_dict(d) for d in json.load(file)]
+
 
 def tokens_to_tree(tokens, symbols):
     """

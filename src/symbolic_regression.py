@@ -16,7 +16,7 @@ from pymoo.termination.max_gen import MaximumGenerationTermination
 
 from symbol_library import generate_symbol_library
 from model import HVAE
-from fasteval.fasteval import FastEval
+from evaluation import RustEval
 
 
 def read_eq_data(filename):
@@ -30,16 +30,17 @@ def read_eq_data(filename):
 def eval_vector(l, model, eval_obj):
     try:
         tree = model.decode(l)
-        y_hat, constants = eval_obj.execute(tree)
-        if not all(np.isfinite(y_hat)):
+        error = eval_obj.get_error(tree.to_list(notation="postfix"))
+        if error is None:
             error = 1e10
-            # print("INF")
-        else:
-            error = np.sqrt(np.square(np.subtract(FastEval.X[:, -1], y_hat)).mean())
+        # else:
+        #     error = np.sqrt(np.square(np.subtract(eval_obj.data[:, -1], y_hat)).mean())
     except:
         print("Recursion limit")
         return 1e10, "", []
-    return error, str(tree), constants
+    return error, str(tree), []
+    # return error, str(tree), constants
+
 
 
 class SRProblem(ElementwiseProblem):
@@ -140,7 +141,8 @@ if __name__ == '__main__':
     input_dim = len(symbols)
     HVAE.add_symbols(symbols)
     model = torch.load(args.params)
-    fe = FastEval(train, args.num_vars, symbols, has_const=args.has_const)
+    # fe = FastEval(train, args.num_vars, symbols, has_const=args.has_const)
+    fe = RustEval(train)
 
     if args.baseline == "HVAE_evo":
         ga = GA(pop_size=200, sampling=TorchNormalSampling(), crossover=LICrossover(), mutation=RandomMutation(),
