@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument("-epochs", default=20, type=int)
     parser.add_argument("-annealing_iters", default=1800, type=int)
     parser.add_argument("-verbose", action="store_true")
-    parser.add_argument("-seed", type=int)
+    parser.add_argument("-seed", default=18, type=int)
     args = parser.parse_args()
 
     if args.seed is not None:

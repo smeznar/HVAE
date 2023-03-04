@@ -1,3 +1,5 @@
+import json
+
 from symbol_library import SymType
 from tree import Node
 
@@ -9,6 +11,12 @@ def read_expressions(filepath):
             expressions.append(line.strip().split(" "))
     return expressions
 
+
+def read_json(filepath):
+    with open(filepath, "r") as file:
+        exprs = json.load(file)
+        trees = [Node.from_dict(d) for d in exprs]
+    return trees
 
 def tokens_to_tree(tokens, symbols):
     """

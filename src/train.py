@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Sampler, Dataset, DataLoader
 from tqdm import tqdm
 
-from utils import tokens_to_tree, read_expressions
+from utils import tokens_to_tree, read_expressions, read_json
 from model import HVAE
 from symbol_library import generate_symbol_library
 
@@ -107,12 +107,15 @@ if __name__ == '__main__':
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
 
-    equations = read_expressions(args.expressions)
     symbols = generate_symbol_library(args.num_vars, args.symbols, args.has_const)
     HVAE.add_symbols(symbols)
 
-    s2t = {s["symbol"]: s for s in symbols}
-    trees = [tokens_to_tree(eq, s2t) for eq in equations]
+    if args.expressions.strip().split(".")[-1] == "json":
+        trees = read_json(args.expressions)
+    else:
+        s2t = {s["symbol"]: s for s in symbols}
+        equations = read_expressions(args.expressions)
+        trees = [tokens_to_tree(eq, s2t) for eq in equations]
 
     model = HVAE(len(symbols), args.latent_size)
 
