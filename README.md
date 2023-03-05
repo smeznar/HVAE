@@ -2,7 +2,7 @@
 
 This repository contains code that is used and presented as part of the paper **_Efficient Generator of Mathematical Expressions for Symbolic Regression_**, that can be found [here](https://arxiv.org/abs/2302.09893):
 
----
+```
 @article{Meznar2023HVAE,
   doi = {10.48550/ARXIV.2302.09893},
   author = {Mežnar, Sebastian and Džeroski, Sašo and Todorovski, Ljupčo},
@@ -10,7 +10,7 @@ This repository contains code that is used and presented as part of the paper **
   publisher = {arXiv},
   year = {2023},
 }
----
+```
 
 An overview of the approach (shown on the symbolic regression example) can be seen below.
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
