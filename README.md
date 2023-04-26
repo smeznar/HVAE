@@ -12,6 +12,8 @@ This repository contains code that is used and presented as part of the paper **
 }
 ```
 
+We are currently refactoring and improving some code and its performance, so some parts of the code might be broken
+
 An overview of the approach (shown on the symbolic regression example) can be seen below.
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
 

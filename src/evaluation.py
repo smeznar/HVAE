@@ -34,7 +34,6 @@ class PymooProblem(ElementwiseProblem):
             out["F"] = self.default_error
 
 
-
 def DE_pymoo(model, constants, evaluator, **estimation_settings):
     pymoo_problem = PymooProblem(model, constants, evaluator, estimation_settings)
     strategy = "DE/best/1/bin"
@@ -67,7 +66,7 @@ def DE_pymoo(model, constants, evaluator, **estimation_settings):
 class RustEval:
     variable_names = 'ABDEFGHIJKLMNOPQRSTUVWXYZČŠŽ'
 
-    def __init__(self, data):
+    def __init__(self, data, verbose=False):
         self.data = data
         d = data.T
         columns = []
@@ -76,7 +75,7 @@ class RustEval:
             columns.append([float(v) for v in d[i]])
             names.append(RustEval.variable_names[i])
         target = [float(v) for v in d[-1]]
-
+        self.verbose = verbose
         self.evaluator = Evaluator(columns, names, target)
 
     def evaluate(self, expression, constants=None):
@@ -84,7 +83,9 @@ class RustEval:
             constants = []
         try:
             return self.evaluator.eval_expr(expression, constants)
-        except:
+        except Exception as e:
+            if self.verbose:
+                print(e)
             return None
 
     def get_error(self, expression, constants=None):
@@ -92,7 +93,9 @@ class RustEval:
             constants = []
         try:
             return self.evaluator.get_rmse(expression, constants)
-        except:
+        except Exception as e:
+            if self.verbose:
+                print(e)
             return None
 
     def fit_and_evaluate(self, expr):
