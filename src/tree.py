@@ -180,7 +180,7 @@ class BatchedNode():
         pred = torch.permute(pred, [0, 2, 1])
         target = BatchedNode.get_target(self)
         BCE = criterion(pred, target)
-        KLD = (lmbda * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()))
+        KLD = (lmbda * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()))/mu.size(0)
         return BCE + KLD, BCE, KLD
 
     def create_target(self):
@@ -203,6 +203,22 @@ class BatchedNode():
             self.left.create_target()
         if self.right is not None:
             self.right.create_target()
+
+    def to_expr_list(self):
+        exprs = []
+        for i in range(len(self.symbols)):
+            exprs.append(self.get_expr_at_idx(i))
+        return exprs
+
+    def get_expr_at_idx(self, idx):
+        symbol = self.symbols[idx]
+        if symbol == "":
+            return None
+
+        left = self.left.get_expr_at_idx(idx) if self.left is not None else None
+        right = self.right.get_expr_at_idx(idx) if self.right is not None else None
+
+        return Node(symbol, left=left, right=right)
 
     @staticmethod
     def get_prediction(tree):

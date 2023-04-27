@@ -115,7 +115,8 @@ class Decoder(nn.Module):
         with torch.no_grad():
             mask = torch.ones(z.size(0)).bool()
             hidden = self.z2h(z)
-            return self.recursive_decode(hidden, symbol_dict, mask)
+            batch = self.recursive_decode(hidden, symbol_dict, mask)
+            return batch.to_expr_list()
 
     def recursive_decode(self, hidden, symbol_dict, mask):
         prediction = F.softmax(self.h2o(hidden), dim=2)
@@ -204,7 +205,6 @@ class GRU122(nn.Module):
         r = torch.sigmoid(self.wir(x) + self.whr(h))
         z = torch.sigmoid(self.wiz(x) + self.whz(h))
         n = torch.tanh(self.win(x) + r * self.whn(h))
-        # TODO: Preglej to:
         dh = h.repeat(1, 1, 2)
         out = (1 - z) * n + z * dh
         return torch.split(out, self.hidden_size, dim=2)

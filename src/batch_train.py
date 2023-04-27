@@ -13,7 +13,6 @@ from tree import BatchedNode
 
 
 def collate_fn(batch):
-
     return batch
 
 
@@ -31,19 +30,19 @@ class TreeSampler(Sampler):
         return self.num_eq // self.batch_size
 
 
-# class TreeBatchSampler(Sampler):
-#     def __init__(self, batch_size, num_eq):
-#         self.batch_size = batch_size
-#         self.num_eq = num_eq
-#
-#     def __iter__(self):
-#         for i in range(len(self)):
-#             batch = np.random.randint(low=0, high=self.num_eq, size=self.batch_size)
-#             BatchedNode(
-#             yield batch
-#
-#     def __len__(self):
-#         return self.num_eq // self.batch_size
+class TreeBatchSampler(Sampler):
+    def __init__(self, batch_size, num_eq):
+        self.batch_size = batch_size
+        self.num_eq = num_eq
+        self.permute = np.random.permutation(self.num_eq)
+
+    def __iter__(self):
+        for i in range(len(self)):
+            batch = self.permute[(i*32):((i+1)*32)]
+            yield batch
+
+    def __len__(self):
+        return self.num_eq // self.batch_size
 
 
 class TreeDataset(Dataset):
@@ -62,9 +61,9 @@ def create_batch(trees):
     t.create_target()
     return t
 
+
 def train_hvae(model, trees, epochs=20, batch_size=32, annealing_iters=2800, verbose=True):
     dataset = TreeDataset(trees)
-    sampler = TreeSampler(batch_size, len(dataset))
 
     optimizer = torch.optim.Adam(model.parameters())
     criterion = torch.nn.CrossEntropyLoss(ignore_index=-1, reduction="mean")
@@ -72,10 +71,12 @@ def train_hvae(model, trees, epochs=20, batch_size=32, annealing_iters=2800, ver
     iter_counter = 0
     lmbda = (np.tanh(-4.5) + 1) / 2
 
-    midpoint = len(dataset) // (8 * batch_size)
+    midpoint = len(dataset) // (2 * batch_size)
 
     for epoch in range(epochs):
+        sampler = TreeBatchSampler(batch_size, len(dataset))
         bce, kl, total, num_iters = 0, 0, 0, 0
+
         with tqdm(total=len(dataset), desc=f'Testing - Epoch: {epoch + 1}/{epochs}', unit='chunks') as prog_bar:
             for i, tree_ids in enumerate(sampler):
                 batch = create_batch([dataset[j] for j in tree_ids])
@@ -99,12 +100,14 @@ def train_hvae(model, trees, epochs=20, batch_size=32, annealing_iters=2800, ver
                 iter_counter += 1
 
                 if verbose and i == midpoint:
+                    original_trees = batch.to_expr_list()
                     z = model.encode(batch)[0]
-                    decoded_tree = model.decode(z)
+                    decoded_trees = model.decode(z)
+                    for i in range(10):
+                        print("--------------------")
+                        print(f"O: {original_trees[i]}")
+                        print(f"P: {decoded_trees[i]}")
                     a = 0
-                #     print("\nO: {}".format(str(trees[0])))
-                #     print("P: {}".format(str(decoded_tree)))
-                #
 
 
 if __name__ == '__main__':
@@ -117,7 +120,7 @@ if __name__ == '__main__':
     parser.add_argument("-latent_size", default=32, type=int)
     parser.add_argument("-epochs", default=20, type=int)
     parser.add_argument("-param_path", default="")
-    parser.add_argument("-annealing_iters", default=2800, type=int)
+    parser.add_argument("-annealing_iters", default=3000, type=int)
     parser.add_argument("-verbose", action="store_true")
     parser.add_argument("-seed", type=int)
     args = parser.parse_args()
