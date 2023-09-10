@@ -1,5 +1,4 @@
 # Efficient Generator of Mathematical Expressions for Symbolic Regression
-![edhie logo](https://github.com/smeznar/HVAE/blob/master/images/edhie1.jpeg)
 
 This repository contains code that is used and presented as part of the paper **_Efficient Generator of Mathematical Expressions for Symbolic Regression_**, that can be found [here](https://link.springer.com/article/10.1007/s10994-023-06400-2):
 
@@ -16,7 +15,8 @@ This repository contains code that is used and presented as part of the paper **
   url={https://doi.org/10.1007/s10994-023-06400-2}
 }
 ```
-
+EDHiE, a mad scientist frantically searching for the right mathematical expression.
+![edhie logo](https://github.com/smeznar/HVAE/blob/master/images/edhie1.jpeg)
 
 We are currently refactoring and improving some code and its performance, so some parts of the code might be broken
 
