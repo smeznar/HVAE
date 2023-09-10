@@ -15,10 +15,12 @@ This repository contains code that is used and presented as part of the paper **
   url={https://doi.org/10.1007/s10994-023-06400-2}
 }
 ```
-EDHiE, a mad scientist frantically searching for the right mathematical expression.
+
+EDHiE, a mad scientist frantically searching for the right mathematical expression:
+
 ![edhie logo](https://github.com/smeznar/HVAE/blob/master/images/edhie1.jpeg)
 
-We are currently refactoring and improving some code and its performance, so some parts of the code might be broken
+**We are currently refactoring and improving some code and its performance, so some parts of the code might be broken.**
 
 An overview of the approach (shown on the symbolic regression example) can be seen below.
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
