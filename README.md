@@ -1,16 +1,22 @@
 # Efficient Generator of Mathematical Expressions for Symbolic Regression
+![edhie logo](https://github.com/smeznar/HVAE/blob/master/images/edhie1.jpeg)
 
-This repository contains code that is used and presented as part of the paper **_Efficient Generator of Mathematical Expressions for Symbolic Regression_**, that can be found [here](https://arxiv.org/abs/2302.09893):
+This repository contains code that is used and presented as part of the paper **_Efficient Generator of Mathematical Expressions for Symbolic Regression_**, that can be found [here](https://link.springer.com/article/10.1007/s10994-023-06400-2):
 
 ```
-@article{Meznar2023HVAE,
-  doi = {10.48550/ARXIV.2302.09893},
-  author = {Mežnar, Sebastian and Džeroski, Sašo and Todorovski, Ljupčo},
-  title = {Efficient Generator of Mathematical Expressions for Symbolic Regression},
-  publisher = {arXiv},
-  year = {2023},
+﻿@article{Mežnar2023HVAE,
+  author={Me{\v{z}}nar, Sebastian and D{\v{z}}eroski, Sa{\v{s}}o and Todorovski, Ljup{\v{c}}o},
+  title={Efficient generator of mathematical expressions for symbolic regression},
+  journal={Machine Learning},
+  year={2023},
+  month={Sep},
+  day={06},
+  issn={1573-0565},
+  doi={10.1007/s10994-023-06400-2},
+  url={https://doi.org/10.1007/s10994-023-06400-2}
 }
 ```
+
 
 We are currently refactoring and improving some code and its performance, so some parts of the code might be broken
 
