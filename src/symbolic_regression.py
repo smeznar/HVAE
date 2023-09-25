@@ -149,7 +149,7 @@ if __name__ == '__main__':
                 eliminate_duplicates=False)
         problem = SRProblem(model, fe, args.latent)
         res = minimize(problem, ga, BestTermination(min_f=args.success_threshold), verbose=True)
-        with open(f"../results/nguyen/{args.dataset.strip().split('/')[-1]}_{time.time()}.json", "w") as file:
+        with open(f"../results/nguyenl/{args.dataset.strip().split('/')[-1]}_{time.time()}.json", "w") as file:
             json.dump({"best": problem.best_expr, "all": list(problem.models.values())}, file)
 
     # if args.baseline == "HVAE_random":
