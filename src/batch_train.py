@@ -62,14 +62,20 @@ def create_batch(trees):
     return t
 
 
-def train_hvae(model, trees, epochs=20, batch_size=32, annealing_iters=2800, verbose=True):
+def logistic_function(iter, total_iters, supremum=0.045):
+    x = iter/total_iters
+    return supremum/(1+50*np.exp(-10*x))
+
+
+def train_hvae(model, trees, epochs=20, batch_size=32, verbose=True):
     dataset = TreeDataset(trees)
 
     optimizer = torch.optim.Adam(model.parameters())
     criterion = torch.nn.CrossEntropyLoss(ignore_index=-1, reduction="mean")
 
     iter_counter = 0
-    lmbda = (np.tanh(-4.5) + 1) / 2
+    total_iters = epochs*(len(dataset)//batch_size)
+    lmbda = logistic_function(iter_counter, total_iters)
 
     midpoint = len(dataset) // (2 * batch_size)
 
@@ -95,8 +101,7 @@ def train_hvae(model, trees, epochs=20, batch_size=32, annealing_iters=2800, ver
                                         'KLD': kl / num_iters})
                 prog_bar.update(batch_size)
 
-                if iter_counter < annealing_iters:
-                    lmbda = (np.tanh((iter_counter - 4500) / 1000) + 1) / 2
+                lmbda = logistic_function(iter_counter, total_iters)
                 iter_counter += 1
 
                 if verbose and i == midpoint:
@@ -137,7 +142,7 @@ if __name__ == '__main__':
 
     model = HVAE(len(symbols), args.latent_size)
 
-    train_hvae(model, trees, args.epochs, args.batch, args.annealing_iters, args.verbose)
+    train_hvae(model, trees, args.epochs, args.batch, args.verbose)
 
     if args.param_path != "":
         torch.save(model, args.param_path)
