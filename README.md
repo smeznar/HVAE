@@ -27,12 +27,9 @@ An overview of the approach (shown on the symbolic regression example) can be se
 
 ## Installing HVAE
 To install and test HVAE, do the following:
-    - Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
-    - Create a new (conda) environment
-    - Install dependencies with command
-    ```
-    pip install -r requirements.txt
-    ```
+  1. Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
+  2. Create a new (conda) environment
+  3. Install dependencies with the command: `pip install -r requirements.txt`
 
 ## Using HVAE
 TBA
