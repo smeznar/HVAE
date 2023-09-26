@@ -26,10 +26,13 @@ An overview of the approach (shown on the symbolic regression example) can be se
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
 
 ## Installing HVAE
-To install and test HVAE, you can use the following command. (Not added currently) 
-```
-python setup.py install
-```
+To install and test HVAE, do the following:
+    - Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
+    - Create a new (conda) environment
+    - Install dependencies with command
+    ```
+    pip install -r requirements.txt
+    ```
 
 ## Using HVAE
 TBA
