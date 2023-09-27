@@ -29,7 +29,7 @@ class PymooProblem(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         try:
-            rmse = self.evaluator.get_rmse(self.model, [float(v) for v in x])
+            rmse = self.evaluator.get_rmse(self.model, [[float(v) for v in x]], self.default_error, True)
             out["F"] = rmse
         except:
             out["F"] = self.default_error
@@ -67,8 +67,9 @@ def DE_pymoo(model, constants, evaluator, **estimation_settings):
 class RustEval:
     variable_names = 'ABDEFGHIJKLMNOPQRSTUVWXYZČŠŽ'
 
-    def __init__(self, data, verbose=False):
+    def __init__(self, data, default_value=1e10, verbose=False):
         self.data = data
+        self.default_value = default_value
         d = data.T
         columns = []
         names = []
@@ -93,7 +94,7 @@ class RustEval:
         if constants is None:
             constants = []
         try:
-            return self.evaluator.get_rmse(expression, constants)
+            return self.evaluator.get_rmse(expression, constants, self.default_value, True)
         except Exception as e:
             if self.verbose:
                 print(e)
@@ -110,9 +111,9 @@ class RustEval:
 
 
 if __name__ == '__main__':
-    data = read_eq_data("/home/sebastianmeznar/Projects/HVAE/data/nguyen/nguyen10_test.csv")
+    data = read_eq_data("/home/sebastian/Projects/HVAE/data/nguyen/nguyen10_test.csv")
     data = np.array([[1., 2., 3., 4.], [2., 3., 4., 5.]]).T
-    rev = RustEval(data)
+    rev = RustEval(data, verbose=True)
     print(rev.fit_and_evaluate(["A", "C", "-"]))
 # names = ["X", "Y"]
 # evaluator = Evaluator(data, names)
