@@ -1,4 +1,4 @@
-import json
+import commentjson as json
 
 from symbol_library import SymType
 from tree import Node
@@ -59,3 +59,8 @@ def tokens_to_tree(tokens, symbols):
         return out_stack[-1]
     else:
         raise Exception(f"Error while parsing expression {expr_str}.")
+
+def load_config_file(path):
+    with open(path, "r") as file:
+        jo = json.load(file)
+    return jo

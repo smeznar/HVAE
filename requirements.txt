@@ -4,4 +4,5 @@ rustimport
 editdistance
 scikit-learn
 tqdm
+commentjson
 pymoo
