@@ -2,7 +2,7 @@ import rustimport.import_hook
 from rusteval import Evaluator
 
 import numpy as np
-from pymoo.core.problem import ElementwiseProblem
+from pymoo.core.problem import Problem
 from pymoo.algorithms.soo.nonconvex.de import DE
 from pymoo.operators.sampling.lhs import LHS
 from pymoo.optimize import minimize
@@ -17,7 +17,7 @@ def read_eq_data(filename):
     return np.array(train)
 
 
-class PymooProblem(ElementwiseProblem):
+class PymooProblem(Problem):
     def __init__(self, model, constants, evaluator, estimation_settings, lower=-5, upper=5, default_error=1e10):
         xl = np.full(constants, lower)
         xu = np.full(constants, upper)
@@ -28,11 +28,8 @@ class PymooProblem(ElementwiseProblem):
         self.estimation_settings = estimation_settings
 
     def _evaluate(self, x, out, *args, **kwargs):
-        try:
-            rmse = self.evaluator.get_rmse(self.model, [[float(v) for v in x]], self.default_error, True)
-            out["F"] = rmse
-        except:
-            out["F"] = self.default_error
+        rmse = self.evaluator.get_rmse(self.model, x.tolist(), self.default_error, False)
+        out["F"] = np.array([error for error in rmse])
 
 
 def DE_pymoo(model, constants, evaluator, **estimation_settings):
@@ -92,9 +89,9 @@ class RustEval:
 
     def get_error(self, expression, constants=None):
         if constants is None:
-            constants = []
+            constants = [[]]
         try:
-            return self.evaluator.get_rmse(expression, constants, self.default_value, True)
+            return self.evaluator.get_rmse(expression, constants, self.default_value, self.verbose)
         except Exception as e:
             if self.verbose:
                 print(e)
@@ -111,10 +108,10 @@ class RustEval:
 
 
 if __name__ == '__main__':
-    data = read_eq_data("/home/sebastian/Projects/HVAE/data/nguyen/nguyen10_test.csv")
+    data = read_eq_data("/home/sebastianmeznar/Projects/HVAE/data/nguyen/nguyen10_test.csv")
     data = np.array([[1., 2., 3., 4.], [2., 3., 4., 5.]]).T
-    rev = RustEval(data, verbose=True)
-    print(rev.fit_and_evaluate(["A", "C", "-"]))
+    rev = RustEval(data)
+    print(rev.fit_and_evaluate(["A", "0", "/", "C", "+"]))
 # names = ["X", "Y"]
 # evaluator = Evaluator(data, names)
 # print(evaluator.eval_expr(["X", "Y", "+"]))
