@@ -1,0 +1,17 @@
+{
+  "expression_definition": {
+    "symbols": ["+", "-", "*", "/", "sin", "cos", "exp", "sqrt", "log", "^2", "^3", "^4", "^5"],
+    "num_variables": 1,
+    "has_constants": false
+  },
+  "training_set": {
+    // Path to the training set. If empty string, a new training set will be created
+    "train_set_path": "",
+    // Parameters for creating a new training set
+    "num_expressions": 40000,
+    "max_tree_height": 7
+  },
+  "symbolic_regression": {
+
+  }
+}
