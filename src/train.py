@@ -16,20 +16,6 @@ def collate_fn(batch):
     return batch
 
 
-class TreeSampler(Sampler):
-    def __init__(self, batch_size, num_eq):
-        self.batch_size = batch_size
-        self.num_eq = num_eq
-
-    def __iter__(self):
-        for i in range(len(self)):
-            batch = np.random.randint(low=0, high=self.num_eq, size=self.batch_size)
-            yield batch
-
-    def __len__(self):
-        return self.num_eq // self.batch_size
-
-
 class TreeBatchSampler(Sampler):
     def __init__(self, batch_size, num_eq):
         self.batch_size = batch_size
@@ -38,7 +24,7 @@ class TreeBatchSampler(Sampler):
 
     def __iter__(self):
         for i in range(len(self)):
-            batch = self.permute[(i*32):((i+1)*32)]
+            batch = self.permute[(i*self.batch_size):((i+1)*self.batch_size)]
             yield batch
 
     def __len__(self):
@@ -54,9 +40,6 @@ class TreeDataset(Dataset):
 
     def __len__(self):
         return len(self.train)
-
-
-
 
 
 def logistic_function(iter, total_iters, supremum=0.045):
@@ -105,7 +88,7 @@ def train_hvae(model, trees, epochs=20, batch_size=32, verbose=True):
                     original_trees = batch.to_expr_list()
                     z = model.encode(batch)[0]
                     decoded_trees = model.decode(z)
-                    for i in range(10):
+                    for i in range(1):
                         print("--------------------")
                         print(f"O: {original_trees[i]}")
                         print(f"P: {decoded_trees[i]}")

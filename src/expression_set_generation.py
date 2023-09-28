@@ -5,6 +5,7 @@ from ProGED.generators import GeneratorGrammar
 from tree import Node
 import json
 
+
 def generate_grammar(symbols):
     grammar = ""
     operators = {}
@@ -160,7 +161,7 @@ def generate_expressions(grammar, number_of_expressions, symbol_objects, has_con
 
 
 if __name__ == '__main__':
-    config = load_config_file("../configs/test_config.json")
+    config = load_config_file("../configs/reconstruction_config.json")
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])

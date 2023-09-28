@@ -106,7 +106,6 @@ class RustEval:
             return self.get_error(expr), []
 
 
-
 if __name__ == '__main__':
     data = read_eq_data("/home/sebastianmeznar/Projects/HVAE/data/nguyen/nguyen10_test.csv")
     data = np.array([[1., 2., 3., 4.], [2., 3., 4., 5.]]).T
