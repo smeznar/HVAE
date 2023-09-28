@@ -30,6 +30,7 @@ To install and test HVAE, do the following:
   1. Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
   2. Create a new (conda) environment
   3. Install dependencies with the command: `pip install -r requirements.txt`
+  4. (Optional - expression set generation) `pip install git+https://github.com/brencej/ProGED`
 
 ## Using HVAE
 TBA
