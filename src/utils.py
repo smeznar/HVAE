@@ -1,7 +1,7 @@
-import commentjson as json
-
+import commentjson as cjson
+import json
 from symbol_library import SymType
-from tree import Node
+from tree import Node, BatchedNode
 
 
 def read_expressions(filepath):
@@ -60,7 +60,14 @@ def tokens_to_tree(tokens, symbols):
     else:
         raise Exception(f"Error while parsing expression {expr_str}.")
 
+
 def load_config_file(path):
     with open(path, "r") as file:
-        jo = json.load(file)
+        jo = cjson.load(file)
     return jo
+
+
+def create_batch(trees):
+    t = BatchedNode(trees=trees)
+    t.create_target()
+    return t

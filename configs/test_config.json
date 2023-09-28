@@ -4,12 +4,23 @@
     "num_variables": 1,
     "has_constants": false
   },
-  "expression_set": {
-    // Path to the training set. If empty string, a new training set will be created
-    "train_set_path": "",
+  "expression_set_generation": {
     // Parameters for creating a new training set
     "num_expressions": 40000,
-    "max_tree_height": 7
+    "max_tree_height": 7,
+    // Path where the generated expression set will be saved. If empty string, the expression set won't be saved
+    "expression_set_path": "../data/expression_sets/ng1_7.json"
+  },
+  "training": {
+    // Path to the training set.
+    "expression_set_path": "../data/expression_sets/ng1_7.json",
+    "epochs": 20,
+    "batch_size": 32,
+    "verbose": true,
+    "latent_size": 32,
+    "seed": 18,
+    // Path where model parameters will be saved. If empty string, the parameters won't be saved
+    "param_path": "../params/ng1_7.pt"
   },
   "symbolic_regression": {
 

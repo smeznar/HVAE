@@ -137,7 +137,7 @@ def generate_expressions(grammar, number_of_expressions, symbol_objects, has_con
     expressions = []
     while len(expression_set) < number_of_expressions:
         if len(expression_set) % 500 == 0:
-            print(len(expression_set))
+            print(f"Unique expressions generated so far: {len(expression_set)}")
         expr = generator.generate_one()[0]
         if has_constants:
             pass
@@ -162,7 +162,7 @@ def generate_expressions(grammar, number_of_expressions, symbol_objects, has_con
 if __name__ == '__main__':
     config = load_config_file("../configs/test_config.json")
     expr_config = config["expression_definition"]
-    es_config = config["expression_set"]
+    es_config = config["expression_set_generation"]
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
     Node.add_symbols(sy_lib)
     so = {s["symbol"]: s for s in sy_lib}
@@ -173,11 +173,13 @@ if __name__ == '__main__':
     if grammar is None:
         grammar = generate_grammar(sy_lib)
 
-    print(grammar)
+    # print(grammar)
 
     expressions = generate_expressions(grammar, es_config["num_expressions"], so, expr_config["has_constants"], max_depth=es_config["max_tree_height"])
 
     expr_dict = [tree.to_dict() for tree in expressions]
 
-    with open("../data/expression_sets/ng1_7.json", "w") as file:
-        json.dump(expr_dict, file)
+    save_path = es_config["expression_set_path"]
+    if save_path != "":
+        with open(save_path, "w") as file:
+            json.dump(expr_dict, file)

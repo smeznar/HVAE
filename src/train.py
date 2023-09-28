@@ -6,7 +6,7 @@ from torch.utils.data import Sampler, Dataset, DataLoader
 from tqdm import tqdm
 
 # from utils import tokens_to_tree, read_expressions
-from utils import read_expressions_json
+from utils import read_expressions_json, load_config_file, create_batch
 from model import HVAE
 from symbol_library import generate_symbol_library
 from tree import BatchedNode
@@ -56,10 +56,7 @@ class TreeDataset(Dataset):
         return len(self.train)
 
 
-def create_batch(trees):
-    t = BatchedNode(trees=trees)
-    t.create_target()
-    return t
+
 
 
 def logistic_function(iter, total_iters, supremum=0.045):
@@ -112,37 +109,26 @@ def train_hvae(model, trees, epochs=20, batch_size=32, verbose=True):
                         print("--------------------")
                         print(f"O: {original_trees[i]}")
                         print(f"P: {decoded_trees[i]}")
-                    a = 0
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(prog='Train HVAE', description='A script for training the HVAE model.')
-    parser.add_argument("-expressions", required=True)
-    parser.add_argument("-symbols", nargs="+", required=True)
-    parser.add_argument("-batch", default=32, type=int)
-    parser.add_argument("-num_vars", default=2, type=int)
-    parser.add_argument("-has_const", action="store_true")
-    parser.add_argument("-latent_size", default=32, type=int)
-    parser.add_argument("-epochs", default=20, type=int)
-    parser.add_argument("-param_path", default="")
-    parser.add_argument("-annealing_iters", default=3000, type=int)
-    parser.add_argument("-verbose", action="store_true")
-    parser.add_argument("-seed", type=int)
-    args = parser.parse_args()
+    config = load_config_file("../configs/test_config.json")
+    expr_config = config["expression_definition"]
+    es_config = config["expression_set_generation"]
+    training_config = config["training"]
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        torch.manual_seed(args.seed)
+    if training_config["seed"] is not None:
+        np.random.seed(training_config["seed"])
+        torch.manual_seed(training_config["seed"])
 
-    symbols = generate_symbol_library(args.num_vars, args.symbols, args.has_const)
-    HVAE.add_symbols(symbols)
+    sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
+    HVAE.add_symbols(sy_lib)
 
-    s2t = {s["symbol"]: s for s in symbols}
-    trees = read_expressions_json(args.expressions)
+    trees = read_expressions_json(training_config["expression_set_path"])
 
-    model = HVAE(len(symbols), args.latent_size)
+    model = HVAE(len(sy_lib), training_config["latent_size"])
 
-    train_hvae(model, trees, args.epochs, args.batch, args.verbose)
+    train_hvae(model, trees, training_config["epochs"], training_config["batch_size"], training_config["verbose"])
 
-    if args.param_path != "":
-        torch.save(model, args.param_path)
+    if training_config["param_path"] != "":
+        torch.save(model, training_config["param_path"])
