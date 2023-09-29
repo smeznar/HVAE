@@ -25,7 +25,7 @@ EDHiE, a mad scientist frantically searching for the right mathematical expressi
 An overview of the approach (shown on the symbolic regression example) can be seen below.
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
 
-## Installing HVAE
+## Installing HVAE/EDHiE
 To install and test HVAE, do the following:
   1. Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
   2. Create a new (conda) environment
@@ -33,8 +33,21 @@ To install and test HVAE, do the following:
   4. (Optional - expression set generation) `pip install git+https://github.com/brencej/ProGED`
 
 ## Using HVAE and EDHiE
+This repository implements both HVAE and EDHiE (HVAE + evolutionary algorithm). HVAE is an autoencoder that needs to be trained before we are able to use it as either a generator or for equation discovery/symbolic regression.
+Sections **Expression set generation** and **Model training** show the steps needed to train a model.
 
+## Expression set generation (TODO: create functions and scripts from this section)
+We use a set of expressions stored in a json file as training data for our model. Such a file can be obtained in two ways:
+  1. Use an existing set of expressions and convert it to a suitable file
+  2. Create a new set of expressions using the _expression_set_generation.py_ script.
 
+1.) An existing set of expressions can be converted to a suitable file with the function "expression_set_to_json" from the _utils.py_.
+This function takes as input a list of expressions (represented as a list of symbols). An example script (_expression_set_to_json.py_) for this use-case with more detailed instructions can be found in the _examples_ folder.
+
+2.) If you currently don't have a set of expressions with which you would like to train the model, you can either find some in the _data/expression_sets/_ directory or generate a new set of expressions using the _expression_set_generation.py_ script (recommended).
+An example script () with detailed instructions can be found in the _examples_ directory. A universal probabilistic grammar for creating expressions is given, but it is recommended that you define a grammar that suits your problem.
+
+## Model training
 
 ## Evaluation scenarios
 Our motivation for this approach is symbolic regression (equation discovery), a machine learning task where you try to find a closed-form solution that fits the given data.
