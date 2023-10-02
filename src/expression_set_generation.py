@@ -1,6 +1,6 @@
 from symbol_library import generate_symbol_library, SymType
 import numpy as np
-from utils import load_config_file
+from hvae_utils import load_config_file
 from ProGED.generators import GeneratorGrammar
 from tree import Node
 import json

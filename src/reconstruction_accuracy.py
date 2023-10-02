@@ -5,7 +5,7 @@ import torch
 from sklearn.model_selection import KFold
 import editdistance
 
-from utils import read_expressions_json, tokens_to_tree, load_config_file, create_batch
+from hvae_utils import read_expressions_json, tokens_to_tree, load_config_file, create_batch
 from symbol_library import generate_symbol_library
 from model import HVAE
 from train import train_hvae

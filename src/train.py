@@ -1,15 +1,12 @@
-from argparse import ArgumentParser
 
 import numpy as np
 import torch
-from torch.utils.data import Sampler, Dataset, DataLoader
+from torch.utils.data import Sampler, Dataset
 from tqdm import tqdm
 
-# from utils import tokens_to_tree, read_expressions
-from utils import read_expressions_json, load_config_file, create_batch
+from hvae_utils import read_expressions_json, load_config_file, create_batch
 from model import HVAE
 from symbol_library import generate_symbol_library
-from tree import BatchedNode
 
 
 def collate_fn(batch):

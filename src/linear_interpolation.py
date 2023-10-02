@@ -1,7 +1,7 @@
 import torch
 
 from model import HVAE
-from utils import tokens_to_tree, load_config_file, create_batch
+from hvae_utils import tokens_to_tree, load_config_file, create_batch
 from symbol_library import generate_symbol_library
 
 

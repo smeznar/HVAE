@@ -17,7 +17,7 @@
     "epochs": 20,
     "batch_size": 1,
     "verbose": true,
-    "latent_size": 32,
+    "latent_size": 128,
     "seed": 18,
     // Path where model parameters will be saved. If empty string, the parameters won't be saved
     "param_path": "../params/temp.pt"

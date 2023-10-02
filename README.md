@@ -41,13 +41,14 @@ We use a set of expressions stored in a json file as training data for our model
   1. Use an existing set of expressions and convert it to a suitable file
   2. Create a new set of expressions using the _expression_set_generation.py_ script.
 
-1.) An existing set of expressions can be converted to a suitable file with the function "expression_set_to_json" from the _utils.py_.
+1.) An existing set of expressions can be converted to a suitable file with the function "expression_set_to_json" from the _hvae_utils.py_.
 This function takes as input a list of expressions (represented as a list of symbols). An example script (_expression_set_to_json.py_) for this use-case with more detailed instructions can be found in the _examples_ folder.
 
 2.) If you currently don't have a set of expressions with which you would like to train the model, you can either find some in the _data/expression_sets/_ directory or generate a new set of expressions using the _expression_set_generation.py_ script (recommended).
 A universal probabilistic grammar for creating expressions is given, but it is recommended that you define a grammar that suits your problem. An example of such a grammar (_grammar.txt_) with some further instructions can be found in the _examples_ directory.
 
 ## Model training
+A HVAE model can be train using the _train.py_ script.
 
 ## Evaluation scenarios
 Our motivation for this approach is symbolic regression (equation discovery), a machine learning task where you try to find a closed-form solution that fits the given data.
