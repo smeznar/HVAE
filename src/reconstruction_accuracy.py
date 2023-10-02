@@ -1,11 +1,9 @@
-from argparse import ArgumentParser
-
 import numpy as np
 import torch
 from sklearn.model_selection import KFold
 import editdistance
 
-from hvae_utils import read_expressions_json, tokens_to_tree, load_config_file, create_batch
+from hvae_utils import read_expressions_json, load_config_file, create_batch
 from symbol_library import generate_symbol_library
 from model import HVAE
 from train import train_hvae
@@ -58,13 +56,7 @@ if __name__ == '__main__':
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     training_config = config["training"]
-
-    # If smaller dataset is True, it will train the model with the specified number of expressions
-    smaller_dataset = True
-    num_examples = 10000
-    # Number of folds for the K-Fold cross-validation
-    n_folds = 5
-    results_path = "../results/hvae.txt"
+    reconstruction_config = config["reconstruction"]
 
     if training_config["seed"] is not None:
         np.random.seed(training_config["seed"])
@@ -73,10 +65,9 @@ if __name__ == '__main__':
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
     HVAE.add_symbols(sy_lib)
 
-    trees = read_expressions_json(training_config["expression_set_path"])
+    trees = read_expressions_json(es_config["expression_set_path"])
 
-    input_dim = len(sy_lib)
-
-    one_experiment(training_config["expression_set_path"], trees, input_dim, training_config["latent_size"],
+    one_experiment(es_config["expression_set_path"], trees, len(sy_lib), training_config["latent_size"],
                    training_config["epochs"], training_config["batch_size"], training_config["verbose"],
-                   training_config["seed"], smaller_dataset, num_examples, n_folds, results_path)
+                   training_config["seed"], reconstruction_config["smaller_dataset"], reconstruction_config["num_examples"],
+                   reconstruction_config["n_folds"], reconstruction_config["results_path"])

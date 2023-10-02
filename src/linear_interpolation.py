@@ -24,15 +24,17 @@ if __name__ == '__main__':
     config = load_config_file("../configs/test_config.json")
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
+    training_config = config["training"]
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
     so = {s["symbol"]: s for s in sy_lib}
     HVAE.add_symbols(sy_lib)
 
-    param_file = "../params/ng1_7.pt"
-    model = torch.load(param_file)
+    model = torch.load(training_config["param_path"])
 
+    # Expressions we want to interpolate between
     exprA = "cos ( A * A + A ) + exp ( A ) / A"
     exprB = "A ^2 - A ^3"
+    # Number of steps in the interpolation (inclusive with expressions A and B)
     steps = 5
 
     tokensA = exprA.split(" ")

@@ -86,13 +86,15 @@ def train_hvae(model, trees, epochs=20, batch_size=32, verbose=True):
                     z = model.encode(batch)[0]
                     decoded_trees = model.decode(z)
                     for i in range(1):
-                        print("--------------------")
                         print(f"O: {original_trees[i]}")
                         print(f"P: {decoded_trees[i]}")
 
 
 if __name__ == '__main__':
-    config = load_config_file("../configs/test_config.json")
+    # Path to the config file
+    config_file_path = "../configs/test_config.json"
+
+    config = load_config_file(config_file_path)
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     training_config = config["training"]
@@ -104,7 +106,7 @@ if __name__ == '__main__':
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
     HVAE.add_symbols(sy_lib)
 
-    trees = read_expressions_json(training_config["expression_set_path"])
+    trees = read_expressions_json(es_config["expression_set_path"])
 
     model = HVAE(len(sy_lib), training_config["latent_size"])
 
