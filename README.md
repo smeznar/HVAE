@@ -45,7 +45,7 @@ We use a set of expressions stored in a json file as training data for our model
 This function takes as input a list of expressions (represented as a list of symbols). An example script (_expression_set_to_json.py_) for this use-case with more detailed instructions can be found in the _examples_ folder.
 
 2.) If you currently don't have a set of expressions with which you would like to train the model, you can either find some in the _data/expression_sets/_ directory or generate a new set of expressions using the _expression_set_generation.py_ script (recommended).
-An example script () with detailed instructions can be found in the _examples_ directory. A universal probabilistic grammar for creating expressions is given, but it is recommended that you define a grammar that suits your problem.
+A universal probabilistic grammar for creating expressions is given, but it is recommended that you define a grammar that suits your problem. An example of such a grammar (_grammar.txt_) with some further instructions can be found in the _examples_ directory.
 
 ## Model training
 

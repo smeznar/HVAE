@@ -71,3 +71,13 @@ def create_batch(trees):
     t = BatchedNode(trees=trees)
     t.create_target()
     return t
+
+
+def expression_set_to_json(expressions, symbols, out_path):
+    dicts = []
+    so = {s["symbol"]: s for s in symbols}
+    for expr in expressions:
+        dicts.append(tokens_to_tree(expr, so).to_dict())
+
+    with open(out_path, "w") as file:
+        json.dump(dicts, file)

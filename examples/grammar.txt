@@ -1,0 +1,32 @@
+An example of a probabilistic grammar:
+"""
+E -> E '+' F [0.2]
+E -> E '-' F [0.2]
+E -> F [0.6]
+F -> F '*' T [0.2]
+F -> F '/' T [0.2]
+F -> T [0.6]
+T -> '(' E ')' P [0.2]
+T -> R '(' E ')' [0.2]
+T -> V [0.4000000000000001]
+T -> '(' E ')' [0.20000000000000004]
+V -> 'A' [1.0]
+R -> 'sin' [0.2]
+R -> 'cos' [0.2]
+R -> 'exp' [0.2]
+R -> 'sqrt' [0.2]
+R -> 'log' [0.2]
+P -> '^2' [0.3508771929824562]
+P -> '^3' [0.26315789473684215]
+P -> '^4' [0.21052631578947373]
+P -> '^5' [0.1754385964912281]
+"""
+
+- The probability of all rules that fall under the same non-terminal symbol (in square brackets e.g., [0.1]) should sum to 1.
+- All terminal symbols should be in single quotes (e.g., '+').
+- The symbol for undefined constant parameters should be 'C'.
+- Other scripts name the variables automatically. Because of this, you should name your variables accordingly.
+  First variable should be named 'A', second 'B', third 'D' ('C' omitted because it is used to represent a constant), ...
+  Complete (ordered) list of variable names is ABDEFGHIJKLMNOPQRSTUVWXYZČŠŽ.
+- Currently supported operators and functions can be found in the "symbol_library.py" script. If you don't find a symbol you are using,
+  you can add it in the "symbol_library.py" and "rusteval/src/evaluator.rs" scripts.
