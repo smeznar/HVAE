@@ -37,6 +37,12 @@
     "results_path": "../results/hvae.txt"
   },
   "symbolic_regression": {
-
+    "baseline": "EDHiE",
+    "population_size": 200,
+    "max_generations": 500,
+    "train_set_path": "../data/nguyen/nguyen3_train.csv",
+    "test_set_path": "../data/nguyen/nguyen3_test.csv",
+    "success_threshold": 1e-5,
+    "results_path": "../results/sr_test.json"
   }
 }

@@ -64,16 +64,22 @@ def DE_pymoo(model, constants, evaluator, **estimation_settings):
 class RustEval:
     variable_names = 'ABDEFGHIJKLMNOPQRSTUVWXYZČŠŽ'
 
-    def __init__(self, data, default_value=1e10, verbose=False):
+    def __init__(self, data, default_value=1e10, no_target=False, verbose=False):
         self.data = data
         self.default_value = default_value
         d = data.T
         columns = []
         names = []
-        for i in range(d.shape[0]-1):
+        num_columns = d.shape[0] if no_target else d.shape[0] - 1
+        for i in range(num_columns):
             columns.append([float(v) for v in d[i]])
             names.append(RustEval.variable_names[i])
-        target = [float(v) for v in d[-1]]
+        if no_target:
+            target = [0.0 for _ in d[-1]]
+        else:
+            target = [float(v) for v in d[-1]]
+
+        self.no_target = no_target
         self.verbose = verbose
         self.evaluator = Evaluator(columns, names, target)
 
@@ -88,29 +94,39 @@ class RustEval:
             return None
 
     def get_error(self, expression, constants=None):
-        if constants is None:
-            constants = [[]]
-        try:
-            return self.evaluator.get_rmse(expression, constants, self.default_value, self.verbose)
-        except Exception as e:
-            if self.verbose:
-                print(e)
-            return None
+        if self.no_target:
+            raise Exception('Initialize RustEval without the "no_target" flag to use the "get_error" function')
+        else:
+            if constants is None:
+                constants = [[]]
+            try:
+                return self.evaluator.get_rmse(expression, constants, self.default_value, self.verbose)
+            except Exception as e:
+                if self.verbose:
+                    print(e)
+                return None
 
     def fit_and_evaluate(self, expr):
-        num_constants = sum([1 for t in expr if t == "C"])
-        if num_constants > 0:
-            x, rmse = DE_pymoo(expr, num_constants, self.evaluator)
-            return rmse, x
+        if self.no_target:
+            raise Exception('Initialize RustEval without the "no_target" flag to use the "get_error" function')
         else:
-            return self.get_error(expr), []
+            num_constants = sum([1 for t in expr if t == "C"])
+            if num_constants > 0:
+                x, rmse = DE_pymoo(expr, num_constants, self.evaluator)
+                return rmse, x
+            else:
+                error = self.get_error(expr)
+                if error is not None:
+                    return error[0], []
+                else:
+                    return None, []
 
 
 if __name__ == '__main__':
     data = read_eq_data("/home/sebastianmeznar/Projects/HVAE/data/nguyen/nguyen10_test.csv")
     data = np.array([[1., 2., 3., 4.], [2., 3., 4., 5.]]).T
     rev = RustEval(data)
-    print(rev.fit_and_evaluate(["A", "0", "/", "C", "+"]))
+    print(rev.fit_and_evaluate(["A", "1", "/", "C", "+"]))
 # names = ["X", "Y"]
 # evaluator = Evaluator(data, names)
 # print(evaluator.eval_expr(["X", "Y", "+"]))

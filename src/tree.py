@@ -1,5 +1,17 @@
 import torch
 from torch.autograd import Variable
+from symbol_library import SymType
+
+
+def is_float(element: any) -> bool:
+    #If you expect None to be passed:
+    if element is None:
+        return False
+    try:
+        float(element)
+        return True
+    except ValueError:
+        return False
 
 
 class Node:
@@ -37,18 +49,26 @@ class Node:
         elif notation == "postfix":
             return left + right + [self.symbol]
         elif notation == "infix":
-            if len(left) > 0 and len(right) == 0 and Node.symbol_precedence(self.symbol) > 0:
-                return [self.symbol] + ["("] + left + [")"]
-            elif len(left) > 0 >= Node.symbol_precedence(self.symbol) and len(right) == 0:
-                return ["("] + left + [")"] + [self.symbol]
-
-            if self.left is not None \
-                    and -1 < Node.symbol_precedence(self.left.symbol) < Node.symbol_precedence(self.symbol):
-                left = ["("] + left + [")"]
-            if self.right is not None \
-                    and -1 < Node.symbol_precedence(self.right.symbol) < Node.symbol_precedence(self.symbol):
-                right = ["("] + right + [")"]
-            return left + [self.symbol] + right
+            if is_float(self.symbol):
+                return [self.symbol]
+            stype = Node.symbol_type(self.symbol)
+            if stype == SymType.Var.value or stype == SymType.Const.value:
+                return [self.symbol]
+            elif stype == SymType.Fun.value:
+                if Node.symbol_precedence(self.symbol) > 0:
+                    return [self.symbol, "("] + left + [")"]
+                else:
+                    if len(left) > 1:
+                        left = ["("] + left + [")"]
+                    return left + [self.symbol]
+            elif stype == SymType.Operator.value:
+                if not is_float(self.left.symbol) and -1 < Node.symbol_precedence(self.left.symbol) <= Node.symbol_precedence(self.symbol):
+                    left = ["("] + left + [")"]
+                if not is_float(self.right.symbol) and -1 < Node.symbol_precedence(self.right.symbol) <= Node.symbol_precedence(self.symbol):
+                    right = ["("] + right + [")"]
+                return left + [self.symbol] + right
+            else:
+                raise Exception("Invalid symbol type")
         else:
             raise Exception("Invalid notation selected. Use 'infix', 'prefix', 'postfix'.")
 
@@ -103,6 +123,10 @@ class Node:
         if 'r' in d:
             right = Node.from_dict(d["r"])
         return Node(d["s"], right=right, left=left)
+
+    @staticmethod
+    def symbol_type(symbol):
+        return Node._symbols[Node._s2c[symbol]]["type"].value
 
     @staticmethod
     def symbol_precedence(symbol):

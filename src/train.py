@@ -86,6 +86,7 @@ def train_hvae(model, trees, epochs=20, batch_size=32, verbose=True):
                     z = model.encode(batch)[0]
                     decoded_trees = model.decode(z)
                     for i in range(1):
+                        print()
                         print(f"O: {original_trees[i]}")
                         print(f"P: {decoded_trees[i]}")
 

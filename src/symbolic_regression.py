@@ -1,13 +1,11 @@
-import argparse
 import json
 import random
-import time
 
 import numpy as np
 import torch
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.optimize import minimize
-from pymoo.core.problem import ElementwiseProblem
+from pymoo.core.problem import Problem
 from pymoo.core.sampling import Sampling
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
@@ -16,7 +14,16 @@ from pymoo.termination.max_gen import MaximumGenerationTermination
 
 from symbol_library import generate_symbol_library
 from model import HVAE
+from hvae_utils import load_config_file, create_batch
 from evaluation import RustEval
+
+# -----------------------------------------------------------------------------------------------------------------
+#
+#                           WORK IN PROGRESS, USE SR SCRIPTS FROM ProGED
+#           (https://github.com/smeznar/ProGED/blob/main/ProGED/examples/ng_bench.py)
+#                                     TO EVALUATE THE RESULTS
+#
+# -----------------------------------------------------------------------------------------------------------------
 
 
 def read_eq_data(filename):
@@ -24,28 +31,14 @@ def read_eq_data(filename):
     with open(filename, "r") as file:
         for line in file:
             train.append([float(v) for v in line.strip().split(",")])
+
     return np.array(train)
 
 
-def eval_vector(l, model, eval_obj):
-    try:
-        tree = model.decode(l)
-        error = eval_obj.get_error(tree.to_list(notation="postfix"))
-        if error is None:
-            error = 1e10
-        # else:
-        #     error = np.sqrt(np.square(np.subtract(eval_obj.data[:, -1], y_hat)).mean())
-    except:
-        print("Recursion limit")
-        return 1e10, "", []
-    return error, str(tree), []
-    # return error, str(tree), constants
-
-
-
-class SRProblem(ElementwiseProblem):
-    def __init__(self, model, eval_object, dim):
+class SRProblem(Problem):
+    def __init__(self, model, eval_object, dim, default_value=1e10):
         self.model = model
+        self.default_value = default_value
         self.eval_object = eval_object
         self.input_mean = torch.zeros(next(model.decoder.parameters()).size(0))
         self.best_f = 9e+50
@@ -54,17 +47,35 @@ class SRProblem(ElementwiseProblem):
         super().__init__(n_var=dim, n_obj=1)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        error, expr, constants = eval_vector(torch.tensor(x[None, None, :]), self.model, self.eval_object)
-        if expr in self.models:
-            self.models[expr]["trees"] += 1
+        trees = self.model.decode(torch.tensor(x[:, None, :]))
+
+        errors = []
+        for tree in trees:
+            error = self.eval_expression(tree)
+            errors.append(error)
+
+        out["F"] = np.array(errors)
+
+    def eval_expression(self, tree):
+        expr_postfix = tree.to_list(notation="postfix")
+        expr_postfix_str = "".join(expr_postfix)
+        if expr_postfix_str in self.models:
+            self.models[expr_postfix_str]["trees"] += 1
+            return self.models[expr_postfix_str]["error"]
         else:
-            constants = [float(c) for c in constants]
-            self.models[expr] = {"expr": expr, "error": error, "trees": 1, "const": constants}
+            error, constants = self.eval_object.fit_and_evaluate(expr_postfix)
+            if error is None:
+                self.models[expr_postfix_str] = {"expr": str(tree), "error": self.default_value, "trees": 1}
+                error = self.default_value
+            else:
+                self.models[expr_postfix_str] = {"expr": str(tree), "error": error, "trees": 1, "constants": constants}
+
             if error < self.best_f:
                 self.best_f = error
-                self.best_expr = self.models[expr]
-                print(f"New best expression: {expr}, with constants [{','.join([str(c) for c in constants])}]")
-        out["F"] = error
+                self.best_expr = str(tree)
+                print(f"New best expression: {self.best_expr}, with constants [{','.join([str(c) for c in constants])}]"
+                      f"\t|\tError: {self.best_f}")
+            return error
 
 
 class TorchNormalSampling(Sampling):
@@ -98,58 +109,41 @@ class RandomMutation(Mutation):
         super().__init__()
 
     def _do(self, problem, X, **kwargs):
-        new = []
-        for i in range(X.shape[0]):
-            eq = problem.model.decode(torch.tensor(X[i, :])[None, None, :])
-            var = problem.model.encode(eq)[1][0, 0].detach().numpy()
-            mutation_scale = np.random.random()
-            std = mutation_scale * (np.exp(var / 2.0) - 1) + 1
-            new.append(torch.normal(torch.tensor(mutation_scale*X[i]), std=torch.tensor(std)).numpy())
-        return np.array(new, dtype=np.float32)
+        trees = problem.model.decode(torch.tensor(X[:, None, :]))
+        batch = create_batch(trees)
+        var = problem.model.encode(batch)[1][:, 0, :].detach().numpy()
+        mutation_scale = np.random.random((200, 1))
+        std = np.multiply(mutation_scale, (np.exp(var/2.0)-1)) + 1
+        return np.random.normal(mutation_scale * X, std).astype(np.float32)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='Nguyen benchmark', description='Run a ED benchmark')
-    parser.add_argument("-dataset", required=True)
-    parser.add_argument("-baseline", choices=['HVAE_evo'], required=True)
-    parser.add_argument("-symbols", nargs="+", required=True)
-    parser.add_argument("-num_vars", default=2, type=int)
-    parser.add_argument("-has_const", action="store_true")
-    parser.add_argument("-latent", default=32, type=int)
-    parser.add_argument("-params", required=True)
-    parser.add_argument("-success_threshold", default=1e-8)
-    parser.add_argument("-seed", type=int)
-    args = parser.parse_args()
+    config = load_config_file("../configs/test_config.json")
+    expr_config = config["expression_definition"]
+    es_config = config["expression_set_generation"]
+    training_config = config["training"]
+    reconstruction_config = config["reconstruction"]
+    sr_config = config["symbolic_regression"]
 
-
-    # -----------------------------------------------------------------------------------------------------------------
-    #
-    #                           WORK IN PROGRESS, USE SR SCRIPTS FROM ProGED
-    #           (https://github.com/smeznar/ProGED/blob/main/ProGED/examples/ng_bench.py)
-    #                                     TO EVALUATE THE RESULTS
-    #
-    # -----------------------------------------------------------------------------------------------------------------
-
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        random.seed(args.seed)
+    if training_config["seed"] is not None:
+        np.random.seed(training_config["seed"])
+        torch.manual_seed(training_config["seed"])
+        random.seed(training_config["seed"])
 
     # Read data
-    train = read_eq_data(args.dataset)
-    symbols = generate_symbol_library(args.num_vars, args.symbols, args.has_const)
-    input_dim = len(symbols)
-    HVAE.add_symbols(symbols)
-    model = torch.load(args.params)
-    # fe = FastEval(train, args.num_vars, symbols, has_const=args.has_const)
-    fe = RustEval(train)
+    train = read_eq_data(sr_config["train_set_path"])
+    fe_train = RustEval(train)
 
-    if args.baseline == "HVAE_evo":
-        ga = GA(pop_size=200, sampling=TorchNormalSampling(), crossover=LICrossover(), mutation=RandomMutation(),
+    sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
+    HVAE.add_symbols(sy_lib)
+    model = torch.load(training_config["param_path"])
+
+    if sr_config["baseline"] == "EDHiE":
+        ga = GA(pop_size=sr_config["population_size"], sampling=TorchNormalSampling(), crossover=LICrossover(), mutation=RandomMutation(),
                 eliminate_duplicates=False)
-        problem = SRProblem(model, fe, args.latent)
-        res = minimize(problem, ga, BestTermination(min_f=args.success_threshold), verbose=True)
-        with open(f"../results/nguyenl/{args.dataset.strip().split('/')[-1]}_{time.time()}.json", "w") as file:
+        problem = SRProblem(model, fe_train, training_config["latent_size"])
+        res = minimize(problem, ga, BestTermination(min_f=sr_config["success_threshold"], n_max_gen=sr_config["max_generations"]), verbose=True)
+        with open(sr_config["results_path"], "w") as file:
             json.dump({"best": problem.best_expr, "all": list(problem.models.values())}, file)
 
     # if args.baseline == "HVAE_random":
