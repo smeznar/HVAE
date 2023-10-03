@@ -94,6 +94,12 @@ Some results of linear interpolation are shown in the table below:
 ![linear_interpolation](https://github.com/smeznar/HVAE/blob/master/images/li.png)
 
 # Symbolic regression
+For evaluation of EDHiE (Equation Discovery with Hierarchical variational autoEncoders = HVAE + evolutionary algorithm)
+on the symbolic regression task, you can use the script _symbolic_regression.py_. Most parameters for symbolic regression
+can be found (and are explained) in the config file.
 
-TBA - EDHiE (Equation Discovery with Hierarchical variational autoEncoders) = HVAE + evolutionary algorithm
+Results of symbolic regression are saved into a file that contains the best expression and its error on both the train and
+the test set, as well as the number of evaluated and generated expressions and top n candidates.
+
+Some results of symbolic regression on the Nguyen symbolic regression benchmark can be found in the table below.
 ![symbolic_regression](https://github.com/smeznar/HVAE/blob/master/images/sr.png)

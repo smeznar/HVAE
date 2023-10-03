@@ -37,21 +37,25 @@
     "results_path": "../results/hvae.txt"
   },
   "symbolic_regression": {
-    // Name of the baseline (only EDHiE for now)
+    // Name of the baseline: two options currently available:
+    // - EDHiE: HVAE + evolutionary algorithm
+    // - HVAR: HVAE + random sampling (uses max_generations*population_size for max number of generated expressions)
     "baselines": ["EDHiE"],
     // Number of individuals in a population of the evolutionary algorithm
     "population_size": 200,
     // Number of generations in the evolutionary algorithm
     "max_generations": 500,
+    // RMSE when an error occurs during the evaluation of an expression (e.g. division by zero)
+    "default_error": 1e10,
     // Path to the tabular data for symbolic regression -> train set
-    "train_set_path": "../data/nguyen/nguyen1_train.csv",
+    "train_set_path": "../data/nguyen/nguyen4_train.csv",
     // Path to the tabular data for symbolic regression -> test set (not relevant yet)
-    "test_set_path": "../data/nguyen/nguyen1_test.csv",
+    "test_set_path": "../data/nguyen/nguyen4_test.csv",
     // Threshold for the highest RMSE allowed, so that an equation is deemed to be successful (typically ~ 1e-7 for
     // expressions without constants and ~ 1e-4 for expressions with constant parameters)
     "success_threshold": 1e-5,
     // Path to the file where results will be saved
-    "results_path": "../results/sr_test.json",
+    "results_path": "../results/ng4_edhie.json",
     "seed": 18,
     // Number of times each baseline will be ran
     "number_of_runs": 10,

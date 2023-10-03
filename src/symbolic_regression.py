@@ -121,7 +121,7 @@ def one_sr_run(config, baseline, re_train, seed):
     if baseline == "EDHiE":
         ga = GA(pop_size=sr_config["population_size"], sampling=TorchNormalSampling(), crossover=LICrossover(), mutation=RandomMutation(),
                 eliminate_duplicates=False)
-        problem = SRProblem(model, re_train, training_config["latent_size"])
+        problem = SRProblem(model, re_train, training_config["latent_size"], default_value=sr_config["default_error"])
         minimize(problem, ga, BestTermination(min_f=sr_config["success_threshold"], n_max_gen=sr_config["max_generations"]), verbose=True)
 
         best_candidates = sorted(list(problem.models.values()), key=lambda x: x['error'])
@@ -132,7 +132,38 @@ def one_sr_run(config, baseline, re_train, seed):
                 "best_candidates": best_candidates}
 
     elif baseline == "HVAR":
-        pass
+        gaussian_distribution_mean = torch.zeros(next(model.decoder.parameters()).size(0))
+        best_f = 9e+50
+        best_expr = ""
+        models = {}
+        for _ in range(sr_config["population_size"]*sr_config["max_generations"]):
+            x = torch.normal(gaussian_distribution_mean)[None, None, :]
+            tree = model.decode(x)[0]
+            expr_postfix = tree.to_list(notation="postfix")
+            expr_postfix_str = "".join(expr_postfix)
+            if expr_postfix_str in models:
+                models[expr_postfix_str]["trees"] += 1
+            else:
+                error, constants = re_train.fit_and_evaluate(expr_postfix)
+                expr_infix = " ".join(tree.to_list())
+                if error is None:
+                    models[expr_postfix_str] = {"expr": expr_infix, "error": sr_config["default_error"], "trees": 1}
+                else:
+                    models[expr_postfix_str] = {"expr": expr_infix, "error": error, "trees": 1, "constants": constants}
+                    if error < best_f:
+                        best_f = error
+                        best_expr = str(tree)
+                        print(f"New best expression: {best_expr}, with constants [{','.join([str(c) for c in constants])}]"
+                            f"\t|\tError: {best_f}")
+                    if error < sr_config["success_threshold"]:
+                        break
+
+        best_candidates = sorted(list(models.values()), key=lambda x: x['error'])
+        if sr_config["save_best_n"] > -1:
+            best_candidates = best_candidates[:sr_config["save_best_n"]]
+        return {"baseline": baseline, "train": {"best_expr": best_candidates[0]['expr'], "best_error": best_candidates[0]["error"]},
+                "all_evaluated": len(models), "all_generated": sum([m["trees"] for m in models.values()]),
+                "best_candidates": best_candidates}
 
 
 def check_on_test_set(results, re_test, so):
@@ -161,7 +192,7 @@ if __name__ == '__main__':
     training_config = config["training"]
 
     train_set = read_eq_data(sr_config["train_set_path"])
-    re_train = RustEval(train_set)
+    re_train = RustEval(train_set, default_value=sr_config["default_error"])
 
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])
     so = {s["symbol"]: s for s in sy_lib}
@@ -183,18 +214,9 @@ if __name__ == '__main__':
             results.append(one_sr_run(config, baseline, re_train, seed))
 
     test_set = read_eq_data(sr_config["test_set_path"])
-    re_test = RustEval(train_set)
+    re_test = RustEval(train_set, default_value=sr_config["default_error"])
     for i in range(len(results)):
         results[i] = check_on_test_set(results[i], re_test, so)
 
     with open(sr_config["results_path"], "w") as file:
         json.dump(results, file)
-    # if args.baseline == "HVAE_random":
-    #     fe = FastEval(train, args.num_vars, symbols, has_const=args.has_const)
-    #     generator = GeneratorHVAE(args.params, ["X"], universal_symbols)
-    #     ed = EqDisco(data=train, variable_names=["X", 'Y'], generator=generator, sample_size=100000, verbosity=0)
-    #     ed.generate_models()
-    #     ed.fit_models()
-    #     print(len(ed.models))
-    #     print(ed.get_results())
-    #     ed.write_results(f"results/hvae_random_{args.dimension}/nguyen_{args.eq_num}_{np.random.randint(0, 1000000)}.json")
