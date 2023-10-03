@@ -175,7 +175,9 @@ impl Evaluator {
                         rmse
                     }
                     else {
-                        println!("Exception during evaluation: Overflow when calculating rmse.");
+                        if verbose {
+                            println!("Exception during evaluation: Overflow when calculating rmse.");
+                        }
                         default_value
                     }
                 }
