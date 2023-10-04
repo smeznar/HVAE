@@ -1,9 +1,12 @@
-from symbol_library import generate_symbol_library, SymType
-import numpy as np
-from hvae_utils import load_config_file
-from ProGED.generators import GeneratorGrammar
-from tree import Node
+from argparse import ArgumentParser
 import json
+
+import numpy as np
+from ProGED.generators import GeneratorGrammar
+
+from tree import Node
+from hvae_utils import load_config_file
+from symbol_library import generate_symbol_library, SymType
 
 
 def generate_grammar(symbols):
@@ -161,7 +164,11 @@ def generate_expressions(grammar, number_of_expressions, symbol_objects, has_con
 
 
 if __name__ == '__main__':
-    config = load_config_file("../configs/test_config.json")
+    parser = ArgumentParser(prog='Expression set generation', description='Generate a set of expressions')
+    parser.add_argument("-config", default="../configs/test_config.json")
+    args = parser.parse_args()
+
+    config = load_config_file(args.config)
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     sy_lib = generate_symbol_library(expr_config["num_variables"], expr_config["symbols"], expr_config["has_constants"])

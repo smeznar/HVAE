@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+
 import torch
 
 from model import HVAE
@@ -21,7 +23,11 @@ def interpolateAB(model, treeA, treeB, steps=5):
 
 
 if __name__ == '__main__':
-    config = load_config_file("../configs/test_config.json")
+    parser = ArgumentParser(prog='Linear interpolation', description='Interpolate between two expressions')
+    parser.add_argument("-config", default="../configs/test_config.json")
+    args = parser.parse_args()
+
+    config = load_config_file(args.config)
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     training_config = config["training"]

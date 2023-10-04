@@ -1,5 +1,6 @@
 import json
 import random
+from argparse import ArgumentParser
 
 import numpy as np
 import torch
@@ -186,7 +187,11 @@ def check_on_test_set(results, re_test, so):
 
 
 if __name__ == '__main__':
-    config = load_config_file("../configs/test_config.json")
+    parser = ArgumentParser(prog='Symbolic regression', description='Run a symbolic regression benchmark')
+    parser.add_argument("-config", default="../configs/test_config.json")
+    args = parser.parse_args()
+
+    config = load_config_file(args.config)
     sr_config = config["symbolic_regression"]
     expr_config = config["expression_definition"]
     training_config = config["training"]

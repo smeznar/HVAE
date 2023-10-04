@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+
 import numpy as np
 import torch
 from sklearn.model_selection import KFold
@@ -52,7 +54,11 @@ def one_experiment(name, trees, input_dim, latent_dim, epochs, batch_size, verbo
 
 
 if __name__ == '__main__':
-    config = load_config_file("../configs/reconstruction_config.json")
+    parser = ArgumentParser(prog='Expression reconstruction', description='Evaluate the reconstruction ability of HVAE')
+    parser.add_argument("-config", default="../configs/test_config.json")
+    args = parser.parse_args()
+
+    config = load_config_file(args.config)
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     training_config = config["training"]

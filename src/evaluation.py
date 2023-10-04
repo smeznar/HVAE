@@ -123,7 +123,7 @@ class RustEval:
 
 
 if __name__ == '__main__':
-    data = read_eq_data("/home/sebastianmeznar/Projects/HVAE/data/nguyen/nguyen10_test.csv")
+    data = read_eq_data("../data/nguyen/nguyen10_test.csv")
     data = np.array([[1., 2., 3., 4.], [2., 3., 4., 5.]]).T
     rev = RustEval(data)
     print(rev.fit_and_evaluate(["A", "1", "/", "C", "+"]))

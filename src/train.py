@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 
 import numpy as np
 import torch
@@ -92,10 +93,11 @@ def train_hvae(model, trees, epochs=20, batch_size=32, verbose=True):
 
 
 if __name__ == '__main__':
-    # Path to the config file
-    config_file_path = "../configs/test_config.json"
+    parser = ArgumentParser(prog='Model training', description='Train a HVAE model')
+    parser.add_argument("-config", default="../configs/test_config.json")
+    args = parser.parse_args()
 
-    config = load_config_file(config_file_path)
+    config = load_config_file(args.config)
     expr_config = config["expression_definition"]
     es_config = config["expression_set_generation"]
     training_config = config["training"]

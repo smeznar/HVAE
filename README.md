@@ -25,12 +25,19 @@ EDHiE, a mad scientist frantically searching for the right mathematical expressi
 An overview of the approach (shown on the symbolic regression example) can be seen below.
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
 
+## Quickstart instructions
+1. Install HVAE/EDHiE
+2. Set up your config file (use _configs/test_config.json_ as a template)
+3. Create a set of expressions with the _expression_set_generation.py_ script and a custom grammar suitable for your problem
+4. Train a HVAE model with the _train.py_ script
+5. Run the _symbolic_regression.py_ script
+
 ## Installing HVAE/EDHiE
 To install and test HVAE, do the following:
-  1. Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
-  2. Create a new (conda) environment
-  3. Install dependencies with the command: `pip install -r requirements.txt`
-  4. (Optional - expression set generation) `pip install git+https://github.com/brencej/ProGED`
+1. Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
+2. Create a new (conda) environment
+3. Install dependencies with the command: `pip install -r requirements.txt`
+4. (Optional - expression set generation) `pip install git+https://github.com/brencej/ProGED`
 
 ## Using HVAE and EDHiE
 This repository implements both HVAE and EDHiE (HVAE + evolutionary algorithm). HVAE is an autoencoder that needs to be trained before we are able to use it as either a generator or for equation discovery/symbolic regression.
@@ -67,7 +74,7 @@ In this section we show how to evaluate these characteristics and how to run sym
 we changed some parts of the approach (mostly BatchedNode, regularization, and symbolic regression script) which may impact
 performance.
 
-# Reconstruction Accuracy
+## Reconstruction Accuracy
 The code for evaluating reconstruction accuracy can be found in *src/reconstruction_accuracy.py* script. Similar to 
 model training, parameters for this script can be found in the config file.
 
@@ -93,7 +100,7 @@ Some results of linear interpolation are shown in the table below:
 
 ![linear_interpolation](https://github.com/smeznar/HVAE/blob/master/images/li.png)
 
-# Symbolic regression
+## Symbolic regression
 For evaluation of EDHiE (Equation Discovery with Hierarchical variational autoEncoders = HVAE + evolutionary algorithm)
 on the symbolic regression task, you can use the script _symbolic_regression.py_. Most parameters for symbolic regression
 can be found (and are explained) in the config file.
