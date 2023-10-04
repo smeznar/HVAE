@@ -43,7 +43,7 @@ To install and test HVAE, do the following:
 This repository implements both HVAE and EDHiE (HVAE + evolutionary algorithm). HVAE is an autoencoder that needs to be trained before we are able to use it as either a generator or for equation discovery/symbolic regression.
 Sections **Expression set generation** and **Model training** show the steps needed to train a model.
 
-## Expression set generation (TODO: create functions and scripts from this section)
+## Expression set generation
 We use a set of expressions stored in a json file as training data for our model. Such a file can be obtained in two ways:
   1. Use an existing set of expressions and convert it to a suitable file
   2. Create a new set of expressions using the _expression_set_generation.py_ script.
