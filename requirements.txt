@@ -4,4 +4,4 @@ editdistance
 scikit-learn
 tqdm
 pymoo
-git+https://github.com/smeznar/SymbolicRegressionToolkit.git
+symbolic-regression-toolkit
