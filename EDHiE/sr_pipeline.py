@@ -4,9 +4,9 @@ from SRToolkit.dataset import SRDataset, SRBenchmark
 from SRToolkit.utils import generate_n_expressions, tokens_to_tree
 
 
-from train import TreeDataset, train_hvae
-from model import HVAE
-from symbolic_regression import symbolic_regression_run
+from EDHiE.train import TreeDataset, train_hvae
+from EDHiE.model import HVAE
+from EDHiE.symbolic_regression import symbolic_regression_run
 
 
 def EDHiE(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_length=40, trainset=None,

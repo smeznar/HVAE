@@ -2,8 +2,8 @@ import torch
 from SRToolkit.utils import tokens_to_tree, generate_n_expressions
 from SRToolkit.dataset import SRBenchmark
 
-from model import HVAE
-from train import create_batch
+from EDHiE.model import HVAE
+from EDHiE.train import create_batch
 
 
 def interpolateAB(model, treeA, treeB, symbol2index, steps=5):

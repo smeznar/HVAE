@@ -4,8 +4,8 @@ from sklearn.model_selection import KFold
 import editdistance
 from SRToolkit.utils import generate_n_expressions, SymbolLibrary, tokens_to_tree
 
-from train import train_hvae, TreeDataset, create_batch
-from model import HVAE
+from EDHiE.train import train_hvae, TreeDataset, create_batch
+from EDHiE.model import HVAE
 
 
 def one_fold(model, train, test, symbol_library, epochs, batch_size, verbose):

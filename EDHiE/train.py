@@ -7,7 +7,7 @@ from torch.utils.data import Sampler, Dataset
 from tqdm import tqdm
 import numpy as np
 
-from model import BatchedNode, HVAE
+from EDHiE.model import BatchedNode, HVAE
 
 def create_batch(trees, symbol2index):
     t = BatchedNode(symbol2index, trees=trees)

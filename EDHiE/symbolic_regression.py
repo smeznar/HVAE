@@ -15,8 +15,8 @@ from pymoo.termination.max_gen import MaximumGenerationTermination
 
 # import nevergrad as ng
 
-from model import HVAE
-from train import create_batch
+from EDHiE.model import HVAE
+from EDHiE.train import create_batch
 
 
 class SRProblem(Problem):
