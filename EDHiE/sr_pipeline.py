@@ -58,7 +58,7 @@ def EDHiE(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_
         for i, result in enumerate(results):
             is_successful = result["min_rmse"] < dataset.success_threshold
             successful = "Successful" if is_successful else "Unsuccessful"
-            evaluated_expressions = f"Number of evaluated expressions: {result["num_evaluated"]}, " if is_successful else ""
+            evaluated_expressions = f"Number of evaluated expressions: {result['num_evaluated']}, " if is_successful else ""
             print(f"Run {i+1}/{len(result)}: {successful}; minimum RMSE: {result['min_rmse']}, {evaluated_expressions}best_expression: {result['best_expr']}")
             if result["min_rmse"] < min_rmse:
                 min_rmse = result["min_rmse"]
@@ -123,7 +123,7 @@ def HVAR(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_l
         for i, result in enumerate(results):
             is_successful = result["min_rmse"] < dataset.success_threshold
             successful = "Successful" if is_successful else "Unsuccessful"
-            evaluated_expressions = f"Number of evaluated expressions: {result["num_evaluated"]}, " if is_successful else ""
+            evaluated_expressions = f"Number of evaluated expressions: {result['num_evaluated']}, " if is_successful else ""
             print(f"Run {i+1}/{len(result)}: {successful}; minimum RMSE: {result['min_rmse']}, {evaluated_expressions}best_expression: {result['best_expr']}")
             if result["min_rmse"] < min_rmse:
                 min_rmse = result["min_rmse"]
@@ -140,5 +140,5 @@ def HVAR(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_l
 
 
 if __name__ == '__main__':
-    dataset = SRBenchmark.feynman("../data/fey_data/").create_dataset("II.11.28")
-    EDHiE(dataset, size_trainset=10000, epochs=20)
+    dataset = SRBenchmark.feynman("../data/fey_data/").list_datasets(num_variables=2)
+    # EDHiE(dataset, size_trainset=10000, epochs=20)
