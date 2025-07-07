@@ -1,9 +1,6 @@
 numpy
 torch
-rustimport
 editdistance
 scikit-learn
 tqdm
-commentjson
-nevergrad
 pymoo

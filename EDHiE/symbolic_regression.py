@@ -20,7 +20,7 @@ from train import create_batch
 
 
 class SRProblem(Problem):
-    def __init__(self, model, evaluator: SR_evaluator, dim, default_value=1e10):
+    def __init__(self, model, evaluator: SR_evaluator, dim, default_value=1e10, verbose=True):
         self.model = model
         self.default_value = np.array(default_value)
         self.evaluator = evaluator
@@ -28,6 +28,7 @@ class SRProblem(Problem):
         self.input_mean = torch.zeros(next(model.decoder.parameters()).size(0))
         self.best_f = 9e+50
         self.models = dict()
+        self.verbose = verbose
         super().__init__(n_var=dim, n_obj=1)
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -39,7 +40,8 @@ class SRProblem(Problem):
             error = self.evaluator.evaluate_expr(expr)
             if error < self.best_f:
                 self.best_f = error
-                print(f"New best expression with score {error}: {''.join(expr)}")
+                if self.verbose:
+                    print(f"New best expression with score {error}: {''.join(expr)}")
             errors.append(error)
 
         out["F"] = np.array(errors)
@@ -84,7 +86,7 @@ class RandomMutation(Mutation):
         return np.random.normal(mutation_scale * X, std).astype(np.float32)
 
 
-def one_sr_run(model, approach, dataset: SRDataset, seed, population_size=40, latent_size=24, max_generations=250, verbose=True):
+def symbolic_regression_run(model, approach, dataset: SRDataset, seed, population_size=40, latent_size=24, max_generations=250, verbose=True):
     np.random.seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
@@ -93,8 +95,8 @@ def one_sr_run(model, approach, dataset: SRDataset, seed, population_size=40, la
     if approach == "EDHiE":
         ga = GA(pop_size=population_size, sampling=TorchNormalSampling(), crossover=LICrossover(),
                 mutation=RandomMutation(), eliminate_duplicates=False)
-        problem = SRProblem(model, evaluator, latent_size)
-        minimize(problem, ga, BestTermination(min_f=dataset.success_threshold, n_max_gen=max_generations), verbose=True)
+        problem = SRProblem(model, evaluator, latent_size, verbose)
+        minimize(problem, ga, BestTermination(min_f=dataset.success_threshold, n_max_gen=max_generations), verbose=verbose)
 
         return evaluator.get_results(top_k=-1, success_threshold=dataset.success_threshold)
 
@@ -205,6 +207,6 @@ if __name__ == '__main__':
             print(f"     Baseline: {approach}, Run: {i+1}/{number_of_runs}")
             print("---------------------------------------------------------------------------")
             print()
-            results.append(one_sr_run(model, approach, dataset, seed, population_size, latent_size, max_generations, verbose))
+            results.append(symbolic_regression_run(model, approach, dataset, seed, population_size, latent_size, max_generations, verbose))
 
     # print(results)

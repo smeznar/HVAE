@@ -26,37 +26,17 @@ An overview of the approach (shown on the symbolic regression example) can be se
 ![algorithm overview](https://github.com/smeznar/HVAE/blob/master/images/overview.png)
 
 ## Quickstart instructions
-1. Install HVAE/EDHiE
-2. Set up your config file (use _configs/test_config.json_ as a template)
-3. Create a set of expressions with the _expression_set_generation.py_ script and a custom grammar suitable for your problem
-4. Train a HVAE model with the _train.py_ script
-5. Run the _symbolic_regression.py_ script
+1. Install HVAE/EDHiE with the command: ```pip install git+https://github.com/smeznar/HVAE``` 
+2. Create an instance of SRDataset using [SRToolkit](https://github.com/smeznar/SymbolicRegressionToolkit/tree/master).
+3. Run the EDHiE or HVAR function.
 
-## Installing HVAE/EDHiE
-To install and test HVAE, do the following:
-1. Install rust (instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install))
-2. Create a new (conda) environment
-3. Install dependencies with the command: `pip install -r requirements.txt`
-4. (Optional - expression set generation) `pip install git+https://github.com/brencej/ProGED`
+An example can be found below:
+```
+from SRToolkit.dataset import SRBenchmark
+``` 
 
 ## Using HVAE and EDHiE
-This repository implements both HVAE and EDHiE (HVAE + evolutionary algorithm). HVAE is an autoencoder that needs to be trained before we are able to use it as either a generator or for equation discovery/symbolic regression.
-Sections **Expression set generation** and **Model training** show the steps needed to train a model.
-
-## Expression set generation
-We use a set of expressions stored in a json file as training data for our model. Such a file can be obtained in two ways:
-  1. Use an existing set of expressions and convert it to a suitable file
-  2. Create a new set of expressions using the _expression_set_generation.py_ script.
-
-1.) An existing set of expressions can be converted to a suitable file with the function "expression_set_to_json" from the _hvae_utils.py_.
-This function takes as input a list of expressions (represented as a list of symbols). An example script (_expression_set_to_json.py_) for this use-case with more detailed instructions can be found in the _examples_ folder.
-
-2.) If you currently don't have a set of expressions with which you would like to train the model, you can either find some in the _data/expression_sets/_ directory or generate a new set of expressions using the _expression_set_generation.py_ script (recommended).
-A universal probabilistic grammar for creating expressions is given, but it is recommended that you define a grammar that suits your problem. An example of such a grammar (_grammar.txt_) with some further instructions can be found in the _examples_ directory.
-
-## Model training
-A HVAE model can be train using the _train.py_ script. All parameters for training are contained in the config file. 
-All these parameters are explained in the example config file _configs/test_config.json_.
+This repository implements HVAE and EDHiE (HVAE + evolutionary algorithm), HVAR (HVAE + random sampling). HVAE is an autoencoder that needs to be trained before we are able to use it as either a generator or for equation discovery/symbolic regression.
 
 ## Evaluation scenarios
 Our motivation for this approach is symbolic regression (equation discovery), a machine learning task where you try to find a closed-form solution that fits the given data.
@@ -75,8 +55,7 @@ we changed some parts of the approach (mostly BatchedNode, regularization, and s
 performance.
 
 ## Reconstruction Accuracy
-The code for evaluating reconstruction accuracy can be found in *src/reconstruction_accuracy.py* script. Similar to 
-model training, parameters for this script can be found in the config file.
+The code for evaluating reconstruction accuracy can be found in *EDHiE/reconstruction_accuracy.py* script together with an example of how to test it. 
 
 Table below shows the percentage of syntactically correct expressions and the reconstruction accuracy (evaluated as the edit
 distance between the original and the predicted expression in the postfix notation). 
@@ -93,20 +72,13 @@ into the latent space with the encoder, generating vectors $z_A$ and $z_B$. Then
 with the formula: $z_\alpha = (1-\alpha)\cdot z_A + \alpha\cdot z_B$, where $\alpha = i/n, i\in 0, ..., n$ and $n$ the 
 number of points we want to create. 
 
-To try it out use the _linear_interpolation.py_ script. Most parameters for linear interpolation can be found in the 
-config file; script contains the two expressions we want to interpolate between and the number of steps in the interpolation.
-
-Some results of linear interpolation are shown in the table below:
+To try it out use the _linear_interpolation.py_ script. Some results of linear interpolation are shown in the table below:
 
 ![linear_interpolation](https://github.com/smeznar/HVAE/blob/master/images/li.png)
 
 ## Symbolic regression
 For evaluation of EDHiE (Equation Discovery with Hierarchical variational autoEncoders = HVAE + evolutionary algorithm)
-on the symbolic regression task, you can use the script _symbolic_regression.py_. Most parameters for symbolic regression
-can be found (and are explained) in the config file.
-
-Results of symbolic regression are saved into a file that contains the best expression and its error on both the train and
-the test set, as well as the number of evaluated and generated expressions and top n candidates.
+on the symbolic regression task, you can use the script _symbolic_regression.py_. 
 
 Some results of symbolic regression on the Nguyen symbolic regression benchmark can be found in the table below.
 ![symbolic_regression](https://github.com/smeznar/HVAE/blob/master/images/sr.png)
