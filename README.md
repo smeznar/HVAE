@@ -32,8 +32,46 @@ An overview of the approach (shown on the symbolic regression example) can be se
 
 An example can be found below:
 ```
-from SRToolkit.dataset import SRBenchmark
+from EDHiE import EDHiE, HVAR
+import numpy as np
+from SRToolkit.dataset import SRBenchmark, SRDataset
+from SRToolkit.utils import SymbolLibrary
+
+# Create your own dataset
+dataset = SRDataset(np.array([[1, 1],[2, 3], [3, 4]]), np.array([2, 5, 7]),
+          ["X_0", "+", "X_1"], "y=a+b", 
+          SymbolLibrary.from_symbol_list(["+", "*", "-"], num_variables=2))
+
+# or import a dataset from SRBenchmark
+dataset = SRBenchmark.feynman("./fd").create_dataset("I.39.1")
+
+# Run EDHiE or HVAR
+EDHiE(dataset, size_trainset=10000, epochs=10, num_runs=3)
+HVAR(dataset, size_trainset=10000, epochs=10, num_runs=3)
 ``` 
+
+## Pipeline Parameters
+When using the pipeline for EDHiE, you can configure the following parameters
+
+| Hyperparameter        | Description                                                                                                                                                                                                                                   | Default Value |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| dataset               | The dataset you want to use for equation discovery/symbolic regression, an instance of [SRToolkit.dataset.SRDataset](https://smeznar.github.io/SymbolicRegressionToolkit/references/dataset/srdataset/#SRToolkit.dataset.srdataset.SRDataset) |               |
+| grammar               | A string of a probabilistic grammar in the NLTK notation. If provided, the expressions in the training set will be generated using it                                                                                                         | None          |
+| size_trainset         | The number of expressions generated to be used as a training set                                                                                                                                                                              | 50000         |
+| max_expression_length | If provided, the generated expressions will be of length at most "max_expression_length"                                                                                                                                                      | 35            |
+| trainset              | If provided (A list of expressions written as a list of tokens), this training set will be used instead of the approach generation one                                                                                                        | None          |
+| pretrained_params     | If provided, a pretrained HVAE model will be used instead of training a new one                                                                                                                                                               | None          |
+| latent_size           | Size of the latent space                                                                                                                                                                                                                      | 32            |
+| epochs                | Number of epoch when training the HVAE model                                                                                                                                                                                                  | 40            | 
+| batch_size            | Batch size when training a HVAE model                                                                                                                                                                                                         | 32            |
+| save_params_to_file   | If provided, the parameters of the trained HVAE model will be saved to file "save_params_to_file"                                                                                                                                             | None          |
+| num_runs              | Number of symbolic regression runs                                                                                                                                                                                                            | 10            |
+| population_size       | Size of the population during the evolutionary algorithm                                                                                                                                                                                      | 200           |
+| max_generations       | The maximum number of generations during the evolutionary algorithm                                                                                                                                                                           | 500           |
+| seed                  | Random seed using during symolic regression. If not None, each consequent run will use the previous seed +1                                                                                                                                   | 18            |
+| verbose               | If True, the function will provide additionall info regarding the progress of trainset generation, training, evolutionary algorithm and provide basic results of symbolic regression                                                          | True          |
+
+HVAR has the parameter expr_generated instead of population_size and max_generations, the tells us how many expressions it will sample and evaluate (equivalent to population_size * max_generations) 
 
 ## Using HVAE and EDHiE
 This repository implements HVAE and EDHiE (HVAE + evolutionary algorithm), HVAR (HVAE + random sampling). HVAE is an autoencoder that needs to be trained before we are able to use it as either a generator or for equation discovery/symbolic regression.

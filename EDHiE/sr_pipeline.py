@@ -1,19 +1,20 @@
+from typing import Union, List
+
 import torch
 import numpy as np
 from SRToolkit.dataset import SRDataset, SRBenchmark
 from SRToolkit.utils import generate_n_expressions, tokens_to_tree
-
 
 from EDHiE.train import TreeDataset, train_hvae
 from EDHiE.model import HVAE
 from EDHiE.symbolic_regression import symbolic_regression_run
 
 
-def EDHiE(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_length=40, trainset=None,
-          pretrain_params=None, latent_size=32, epochs=40, batch_size=32, save_params_to_file=None,
-          num_runs=10, population_size=200, max_generations=500, seed=18, verbose=True):
+def EDHiE(dataset: SRDataset, grammar: Union[str, None]=None, size_trainset: int=50000, max_expression_length: int=35, trainset: Union[List[List[str]], None]=None,
+          pretrained_params: Union[str, None]=None, latent_size: int=32, epochs: int=40, batch_size: int=32, save_params_to_file: Union[str, None]=None,
+          num_runs: int=10, population_size: int=200, max_generations: int=500, seed: Union[int, None]=18, verbose: bool=True):
 
-    if pretrain_params is None:
+    if pretrained_params is None:
         # Generate trainset
         if trainset is None:
             if grammar is not None:
@@ -31,7 +32,7 @@ def EDHiE(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_
         model.eval()
     else:
         model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
-        model.load_state_dict(torch.load(pretrain_params, weights_only=True))
+        model.load_state_dict(torch.load(pretrained_params, weights_only=True))
         model.eval()
 
     results = []
@@ -59,7 +60,7 @@ def EDHiE(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_
             is_successful = result["min_rmse"] < dataset.success_threshold
             successful = "Successful" if is_successful else "Unsuccessful"
             evaluated_expressions = f"Number of evaluated expressions: {result['num_evaluated']}, " if is_successful else ""
-            print(f"Run {i+1}/{len(result)}: {successful}; minimum RMSE: {result['min_rmse']}, {evaluated_expressions}best_expression: {result['best_expr']}")
+            print(f"Run {i+1}/{len(results)}: {successful}; minimum RMSE: {result['min_rmse']}, {evaluated_expressions}best_expression: {result['best_expr']}")
             if result["min_rmse"] < min_rmse:
                 min_rmse = result["min_rmse"]
                 best_expression = result["best_expr"]
@@ -74,11 +75,11 @@ def EDHiE(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_
     return results
 
 
-def HVAR(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_length=35, trainset=None,
-         pretrain_params=None, latent_size=32, epochs=40, batch_size=32, save_params_to_file=None,
-         num_runs=10, expr_generated=100000, seed=18, verbose=True):
+def HVAR(dataset: SRDataset, grammar: Union[str, None]=None, size_trainset: int=50000, max_expression_length: int=35, trainset: Union[List[List[str]], None]=None,
+          pretrained_params: Union[str, None]=None, latent_size: int=32, epochs: int=40, batch_size: int=32, save_params_to_file: Union[str, None]=None,
+          num_runs: int=10, expr_generated: int=100000, seed: Union[int, None]=18, verbose: bool=True):
 
-    if pretrain_params is None:
+    if pretrained_params is None:
         # Generate trainset
         if trainset is None:
             if grammar is not None:
@@ -96,7 +97,7 @@ def HVAR(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_l
         model.eval()
     else:
         model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
-        model.load_state_dict(torch.load(pretrain_params, weights_only=True))
+        model.load_state_dict(torch.load(pretrained_params, weights_only=True))
         model.eval()
 
     results = []
@@ -124,7 +125,7 @@ def HVAR(dataset: SRDataset, grammar=None, size_trainset=50000, max_expression_l
             is_successful = result["min_rmse"] < dataset.success_threshold
             successful = "Successful" if is_successful else "Unsuccessful"
             evaluated_expressions = f"Number of evaluated expressions: {result['num_evaluated']}, " if is_successful else ""
-            print(f"Run {i+1}/{len(result)}: {successful}; minimum RMSE: {result['min_rmse']}, {evaluated_expressions}best_expression: {result['best_expr']}")
+            print(f"Run {i+1}/{len(results)}: {successful}; minimum RMSE: {result['min_rmse']}, {evaluated_expressions}best_expression: {result['best_expr']}")
             if result["min_rmse"] < min_rmse:
                 min_rmse = result["min_rmse"]
                 best_expression = result["best_expr"]
