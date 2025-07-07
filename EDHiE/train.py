@@ -87,8 +87,8 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
                     decoded_trees = model.decode(z)
                     for i in range(1):
                         print()
-                        print(f"O: {"".join(original_trees[i].to_list(symbol_library=symbol_library))}")
-                        print(f"P: {"".join(decoded_trees[i].to_list(symbol_library=symbol_library))}")
+                        print(f"O: {''.join(original_trees[i].to_list(symbol_library=symbol_library))}")
+                        print(f"P: {''.join(decoded_trees[i].to_list(symbol_library=symbol_library))}")
 
 
 if __name__ == '__main__':
