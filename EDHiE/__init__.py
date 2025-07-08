@@ -1,5 +1,5 @@
 """
-Efficient Generator of Mathematical Expressions for Symbolic Regression
+Efficient Generator of Mathematical Expressions for Symbolic Regression.
 """
 
 __version__ = "1.0.0"
