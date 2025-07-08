@@ -12,7 +12,11 @@ from EDHiE.model import BatchedNode, HVAE
 def create_batch(trees, symbol2index):
     t = BatchedNode(symbol2index, trees=trees)
     t.create_target()
-    return t
+    num_constants = []
+    for tree in trees:
+        num_constants.append(sum([1 for symbol in tree.to_list(notation = "postfix") if symbol=='C']))
+    return t, num_constants
+
 
 class TreeBatchSampler(Sampler):
     def __init__(self, batch_size, num_eq):
@@ -45,7 +49,16 @@ def logistic_function(iter, total_iters, supremum=0.04):
     return supremum/(1+50*np.exp(-10*x))
 
 
-def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbose=True):
+def sample_constants(num_constants, const_bounds, num_samples=32):
+    constants = []
+    for num in num_constants:
+        constants.append(np.random.uniform(const_bounds[0], const_bounds[1], size=(num_samples, num)))
+    return constants
+
+
+def train_hvae(model, trainset, data, symbol_library, epochs=20, batch_size=32, const_bounds=None, verbose=True):
+    if const_bounds is None:
+        const_bounds = [-5, 5]
     symbol2index = symbol_library.symbols2index()
     optimizer = Adam(model.parameters())
     criterion = CrossEntropyLoss(ignore_index=-1, reduction="mean")
@@ -62,9 +75,9 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
 
         with tqdm(total=len(trainset), desc=f'Training HVAE - Epoch: {epoch + 1}/{epochs}', unit='chunks') as prog_bar:
             for i, tree_ids in enumerate(sampler):
-                batch = create_batch([trainset[j] for j in tree_ids], symbol2index)
-
-                mu, logvar, outputs = model(batch)
+                batch, num_constants = create_batch([trainset[j] for j in tree_ids], symbol2index)
+                constants = sample_constants(num_constants, const_bounds)
+                mu, logvar, outputs = model(batch, data, constants)
                 loss, bcel, kll = outputs.loss(mu, logvar, lmbda, criterion)
                 bce += bcel.detach().item()
                 kl += kll.detach().item()
@@ -94,7 +107,7 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
 if __name__ == '__main__':
     dataset = SRBenchmark.feynman("../data/fey_data").create_dataset("I.29.4")
     latent_size = 24
-    num_expressions = 30000
+    num_expressions = 5000
     max_expression_length = 30
     model_name = "24random"
 
@@ -106,5 +119,5 @@ if __name__ == '__main__':
 
     # Train the model
     model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
-    train_hvae(model, trainset, dataset.symbols, epochs=40)
+    train_hvae(model, trainset, dataset.X[:64, :], dataset.symbols, epochs=40)
     torch.save(model.state_dict(), f"../params/{model_name}.pt")

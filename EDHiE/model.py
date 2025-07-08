@@ -1,5 +1,6 @@
 from typing import Union, List, Dict
 
+import numpy as np
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -20,6 +21,9 @@ class BatchedNode:
         if trees is not None:
             for tree in trees:
                 self.add_tree(tree)
+
+    def __len__(self):
+        return len(self.symbols)
 
     def add_tree(self, tree=None):
         # Add an empty subtree to the batch
@@ -135,6 +139,54 @@ class BatchedNode:
 
         return reps
 
+    def eval_node(self, data, consts, const_nums, symbol_library, left_eval=None, right_eval=None) -> (np.array, List[int]):
+        eval_mats = np.zeros((len(self.symbols), consts[0].shape[0], data.shape[0]))
+        for i, s in enumerate(self.symbols):
+            if s == "":
+                continue
+            elif symbol_library.get_type(s) == "var":
+                try:
+                    index = int(symbol_library.get_np_fn(s).split("[:, ")[1].strip(']'))
+                except:
+                    raise Exception(f"Could not extract variable index for symbol {s}, try changing the np function for"
+                                    f" this symbol to something similar to 'X[:, i]', where i is the variable index. ")
+                eval_mats[i, :, :] = np.repeat(data[:, index][None, :], consts[i].shape[0], axis=0)
+            elif symbol_library.get_type(s) == "const":
+                if const_nums[i] >= consts[i].shape[1]:
+                    raise Exception(f"Too many constants in expression {i}.")
+                eval_mats[i, :, :] = np.repeat(consts[i][:, const_nums[i]][:, None], data.shape[0], axis=1)
+                const_nums[i] += 1
+            elif symbol_library.get_type(s) == "lit":
+                try:
+                    lit = eval(symbol_library.get_np_fn(s).split("np.full(X.shape[0], ")[1].strip(')'))
+                except:
+                    raise Exception(f"Could not extract value of the literal {s}, try changing the np function for"
+                                    f" this symbol to something similar to 'np.full(X.shape[0], s)', where s is the"
+                                    f" value of the literal. ")
+                eval_mats[i, :, :] = eval_mats[i, :, :] + lit
+            elif symbol_library.get_type(s) == "fn":
+                try:
+                    eval_mat = eval(symbol_library.get_np_fn(s).split("{} = ")[1].format("left_eval[i]"))
+                except:
+                    raise Exception(f"Error during evaluation of function {s}. Make sure the function is defined in the"
+                                    f"format similar to '{{}} = np.sin({{}})'"
+                                    )
+                eval_mats[i, :, :] = eval_mat
+            elif symbol_library.get_type(s) == "op":
+                try:
+                    eval_mat = eval(symbol_library.get_np_fn(s).split("{} = ")[1].format("left_eval[i]", "right_eval[i]"))
+                except:
+                    raise Exception(f"Error during evaluation of operator {s}. Make sure the function is defined in the"
+                                    f"format similar to '{{}} = {{}} + {{}}'"
+                                    )
+                eval_mats[i, :, :] = eval_mat
+            else:
+                raise ValueError("Unknown symbol type: " + s)
+
+        return np.stack(eval_mats), const_nums
+
+
+
 
 class HVAE(nn.Module):
     def __init__(self, input_size: int, output_size: int, symbol_library: SymbolLibrary, hidden_size: Union[None, int]=None):
@@ -143,11 +195,11 @@ class HVAE(nn.Module):
         if hidden_size is None:
             hidden_size = output_size
 
-        self.encoder = Encoder(input_size, hidden_size, output_size)
+        self.encoder = Encoder(input_size, hidden_size, output_size, symbol_library)
         self.decoder = Decoder(output_size, hidden_size, input_size, symbol_library)
 
-    def forward(self, tree: BatchedNode) -> (torch.Tensor, torch.Tensor, BatchedNode):
-        mu, logvar = self.encoder(tree)
+    def forward(self, tree: BatchedNode, data: np.array, consts: List[np.array]) -> (torch.Tensor, torch.Tensor, BatchedNode):
+        mu, logvar = self.encoder(tree, data, consts)
         z = self.sample(mu, logvar)
         out = self.decoder(z, tree)
         return mu, logvar, out
@@ -166,36 +218,42 @@ class HVAE(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, output_size: int):
+    def __init__(self, input_size: int, hidden_size: int, output_size: int, symbol_library: SymbolLibrary):
         super(Encoder, self).__init__()
         self.hidden_size = hidden_size
         self.gru = GRU221(input_size=input_size, hidden_size=hidden_size)
         self.mu = nn.Linear(in_features=hidden_size, out_features=output_size)
         self.logvar = nn.Linear(in_features=hidden_size, out_features=output_size)
+        self.symbol_library = symbol_library
 
         torch.nn.init.xavier_uniform_(self.mu.weight)
         torch.nn.init.xavier_uniform_(self.logvar.weight)
 
-    def forward(self, tree: BatchedNode) -> (torch.Tensor, torch.Tensor):
-        tree_encoding = self.recursive_forward(tree)
+    def forward(self, tree: BatchedNode, data: np.array, consts: List[np.array]) -> (torch.Tensor, torch.Tensor):
+        tree_encoding = self.recursive_forward(tree, data, consts, [0 for _ in range(len(tree))])[0]
         mu = self.mu(tree_encoding)
         logvar = self.logvar(tree_encoding)
         return mu, logvar
 
-    def recursive_forward(self, tree: BatchedNode) -> torch.Tensor:
+    def recursive_forward(self, tree: BatchedNode, data: np.array, consts: List[np.array], consts_nums: List[int]) \
+            -> (torch.Tensor, np.array, List[int]):
         if isinstance(tree.left, BatchedNode):
-            h_left = self.recursive_forward(tree.left)
+            h_left, eval_left, consts_nums = self.recursive_forward(tree.left, data, consts, consts_nums)
         else:
             h_left = torch.zeros(tree.target.size(0), self.hidden_size)
+            eval_left = None
 
         if isinstance(tree.right, BatchedNode):
-            h_right = self.recursive_forward(tree.right)
+            h_right, eval_right, consts_nums = self.recursive_forward(tree.right, data, consts, consts_nums)
         else:
             h_right = torch.zeros(tree.target.size(0), self.hidden_size)
+            eval_right = None
 
+        eval_mat, consts_nums = tree.eval_node(data, consts, consts_nums, self.symbol_library, eval_left, eval_right)
+        # Todo: Add eval mat to embedding
         hidden = self.gru(tree.target, h_left, h_right)
         hidden = hidden.mul(tree.mask[:, None])
-        return hidden
+        return hidden, eval_mat, consts_nums
 
 
 class Decoder(nn.Module):
