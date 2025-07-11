@@ -32,11 +32,11 @@ class SRProblem(Problem):
         super().__init__(n_var=dim, n_obj=1)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        trees = self.model.decode(torch.tensor(x[:, :]))
+        trees = self.model.decode(torch.tensor(x))
 
         errors = []
         for tree in trees:
-            expr = tree.to_list("infix", self.evaluator.symbol_library)
+            expr = tree.to_list(self.evaluator.symbol_library, "infix")
             error = self.evaluator.evaluate_expr(expr)
             if error < self.best_f:
                 self.best_f = error
