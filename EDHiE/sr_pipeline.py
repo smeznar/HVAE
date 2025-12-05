@@ -141,5 +141,29 @@ def HVAR(dataset: SRDataset, grammar: Union[str, None]=None, size_trainset: int=
 
 
 if __name__ == '__main__':
-    dataset = SRBenchmark.feynman("../data/fey_data/").list_datasets(num_variables=2)
-    # EDHiE(dataset, size_trainset=10000, epochs=20)
+
+    grammar = """E -> E '+' F [0.2004]
+E -> E '-' F [0.1108]
+E -> F [0.6888]
+F -> F '*' T [0.3349]
+F -> F '/' T [0.1098]
+F -> T [0.5553]
+T -> 'C' [0.1174]
+T -> R [0.1746]
+T -> V [0.708]
+R -> '(' E ')' [0.6841]
+R -> E '^2' [0.00234]
+R -> E '^3' [0.00126]
+R -> 'sin' '(' E ')' [0.028]
+R -> 'cos' '(' E ')' [0.049]
+R -> 'sqrt' '(' E ')' [0.0936]
+R -> 'exp' '(' E ')' [0.0878]
+R -> 'ln' '(' E ')' [0.0539]
+V -> 'X_0' [0.33]
+V -> 'X_1' [0.33]
+V -> 'X_2' [0.34]"""
+
+    benchmark = SRBenchmark.feynman("../data/fey_data/")
+    dataset = benchmark.create_dataset("I.12.4")
+    EDHiE(dataset, size_trainset=10000, epochs=20, latent_size=24, num_runs=10, grammar=grammar, verbose=True, seed=0,
+          max_generations=250, population_size=40)

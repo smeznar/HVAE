@@ -118,6 +118,6 @@ if __name__ == '__main__':
     trainset = TreeDataset(expr_tree)
 
     # Train the model
-    model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
+    model = HVAE(len(dataset.symbols), latent_size, dataset.symbols, embed_behavior=True)
     train_hvae(model, trainset, dataset.X[:64, :], dataset.symbols, epochs=40)
     torch.save(model.state_dict(), f"../params/{model_name}.pt")

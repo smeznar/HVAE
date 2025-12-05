@@ -8,6 +8,38 @@ import torch.nn as nn
 from SRToolkit.utils import Node, SymbolLibrary
 
 
+class LogRatioLoss(torch.autograd.Function):
+    """Log ratio loss function. """
+    @staticmethod
+    def forward(input: torch.Tensor, gt_dist: torch.Tensor) -> torch.Tensor:
+        m = input.size(0) - 1
+        a = input[0]
+        p = input[1:]
+
+        idxs = torch.arange(1, m + 1, device=input.device)
+        indc = idxs.repeat(m, 1).t() < idxs.repeat(m, 1)
+
+        epsilon = 1e-6
+        eps = 1e-4 / a.numel()
+
+        diff = torch.abs(a - p)[:, 0, :]
+        out = torch.pow(diff, 2).sum(dim=1)
+        dist = torch.pow(out + eps, 1. / 2)
+
+        log_dist = torch.log(dist + epsilon)
+        log_gt_dist = torch.log(gt_dist + epsilon)
+        diff_log_dist = log_dist.repeat(m, 1).t() - log_dist.repeat(m, 1)
+        diff_log_gt_dist = log_gt_dist.repeat(m, 1).t() - log_gt_dist.repeat(m, 1)
+
+        wgt = indc.clone().float().div(indc.clone().float().sum())
+
+        log_ratio_loss = (diff_log_dist - diff_log_gt_dist).pow(2)
+
+        loss = log_ratio_loss.mul(wgt).sum()
+
+        return loss
+
+
 class BatchedNode:
     def __init__(self, symbol2index: Dict[str, int], size: int=0, trees:Union[None, List[Node]]=None):
         self.symbols: List[str] = ["" for _ in range(size)]
@@ -66,6 +98,15 @@ class BatchedNode:
         BCE = criterion(pred, target)
         KLD = (lmbda * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()))/mu.size(0)
         return BCE + KLD, BCE, KLD
+
+    def behavioral_loss(self, mu, logvar, lmbda, bed_distance, mi, criterion):
+        pred = self.get_prediction()
+        target = self.get_target()
+        LRL = LogRatioLoss().forward(mu, bed_distance)
+        BCE = criterion(pred, target)
+        KLD = (lmbda * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())) / mu.size(0)
+        # return BCE + KLD, BCE, KLD, SSR
+        return BCE + KLD + mi * LRL, BCE, KLD, LRL
 
     def create_target(self):
         target = torch.zeros((len(self.symbols), len(self.symbol2index)))
@@ -140,7 +181,7 @@ class BatchedNode:
         return reps
 
     def eval_node(self, data, consts, const_nums, symbol_library, left_eval=None, right_eval=None) -> (np.array, List[int]):
-        eval_mats = np.zeros((len(self.symbols), consts[0].shape[0], data.shape[0]))
+        eval_mats = np.zeros((len(self.symbols), data.shape[0], consts[0].shape[0]))
         for i, s in enumerate(self.symbols):
             if s == "":
                 continue
@@ -150,11 +191,11 @@ class BatchedNode:
                 except:
                     raise Exception(f"Could not extract variable index for symbol {s}, try changing the np function for"
                                     f" this symbol to something similar to 'X[:, i]', where i is the variable index. ")
-                eval_mats[i, :, :] = np.repeat(data[:, index][None, :], consts[i].shape[0], axis=0)
+                eval_mats[i, :, :] = np.repeat(data[:, index][:, None], consts[i].shape[0], axis=1)
             elif symbol_library.get_type(s) == "const":
                 if const_nums[i] >= consts[i].shape[1]:
                     raise Exception(f"Too many constants in expression {i}.")
-                eval_mats[i, :, :] = np.repeat(consts[i][:, const_nums[i]][:, None], data.shape[0], axis=1)
+                eval_mats[i, :, :] = np.repeat(consts[i][:, const_nums[i]][None, :], data.shape[0], axis=0)
                 const_nums[i] += 1
             elif symbol_library.get_type(s) == "lit":
                 try:
@@ -189,13 +230,13 @@ class BatchedNode:
 
 
 class HVAE(nn.Module):
-    def __init__(self, input_size: int, output_size: int, symbol_library: SymbolLibrary, hidden_size: Union[None, int]=None):
+    def __init__(self, input_size: int, output_size: int, symbol_library: SymbolLibrary, hidden_size: Union[None, int]=None, embed_behavior: bool=True):
         super(HVAE, self).__init__()
 
         if hidden_size is None:
             hidden_size = output_size
 
-        self.encoder = Encoder(input_size, hidden_size, output_size, symbol_library)
+        self.encoder = Encoder(input_size, hidden_size, output_size, symbol_library, embed_behavior=embed_behavior)
         self.decoder = Decoder(output_size, hidden_size, input_size, symbol_library)
 
     def forward(self, tree: BatchedNode, data: np.array, consts: List[np.array]) -> (torch.Tensor, torch.Tensor, BatchedNode):
@@ -218,13 +259,14 @@ class HVAE(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, output_size: int, symbol_library: SymbolLibrary):
+    def __init__(self, input_size: int, hidden_size: int, output_size: int, symbol_library: SymbolLibrary, embed_behavior: bool=True):
         super(Encoder, self).__init__()
         self.hidden_size = hidden_size
         self.gru = GRU221(input_size=input_size, hidden_size=hidden_size)
         self.mu = nn.Linear(in_features=hidden_size, out_features=output_size)
         self.logvar = nn.Linear(in_features=hidden_size, out_features=output_size)
         self.symbol_library = symbol_library
+        self.embed_behavior = embed_behavior
 
         torch.nn.init.xavier_uniform_(self.mu.weight)
         torch.nn.init.xavier_uniform_(self.logvar.weight)
@@ -249,11 +291,14 @@ class Encoder(nn.Module):
             h_right = torch.zeros(tree.target.size(0), self.hidden_size)
             eval_right = None
 
-        eval_mat, consts_nums = tree.eval_node(data, consts, consts_nums, self.symbol_library, eval_left, eval_right)
-        # Todo: Add eval mat to embedding
         hidden = self.gru(tree.target, h_left, h_right)
         hidden = hidden.mul(tree.mask[:, None])
-        return hidden, eval_mat, consts_nums
+        if self.embed_behavior:
+            eval_mat, consts_nums = tree.eval_node(data, consts, consts_nums, self.symbol_library, eval_left, eval_right)
+            # Todo: Add eval mat to embedding
+            return hidden, eval_mat, consts_nums
+
+        return hidden, None, consts_nums
 
 
 class Decoder(nn.Module):
