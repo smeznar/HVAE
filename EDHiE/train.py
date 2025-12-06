@@ -94,7 +94,7 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
 if __name__ == '__main__':
     dataset = SRBenchmark.feynman("../data/fey_data").create_dataset("I.29.4")
     latent_size = 24
-    num_expressions = 30000
+    num_expressions = 5000
     max_expression_length = 30
     model_name = "24random"
 

@@ -36,7 +36,7 @@ class SRProblem(Problem):
 
         errors = []
         for tree in trees:
-            expr = tree.to_list("infix", self.evaluator.symbol_library)
+            expr = tree.to_list(self.evaluator.symbol_library, "infix")
             error = self.evaluator.evaluate_expr(expr)
             if error < self.best_f:
                 self.best_f = error
@@ -106,7 +106,7 @@ def symbolic_regression_run(model, approach, dataset: SRDataset, seed, populatio
         for _ in range(population_size*max_generations):
             x = torch.normal(gaussian_distribution_mean)[None, :]
             tree = model.decode(x)[0]
-            expr = tree.to_list("infix", dataset.symbols)
+            expr = tree.to_list(dataset.symbols, "infix")
             expr_score = evaluator.evaluate_expr(expr)
             if expr_score < min_score and verbose:
                 min_score = expr_score
