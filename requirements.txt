@@ -4,4 +4,4 @@ editdistance
 scikit-learn
 tqdm
 pymoo
-symbolic-regression-toolkit
+symbolic-regression-toolkit==1.3.3
