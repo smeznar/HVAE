@@ -45,14 +45,14 @@ def logistic_function(iter, total_iters, supremum=0.04):
     return supremum/(1+50*np.exp(-10*x))
 
 
-def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbose=True):
+def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbose=True, max_beta=0.04):
     symbol2index = symbol_library.symbols2index()
     optimizer = Adam(model.parameters())
     criterion = CrossEntropyLoss(ignore_index=-1, reduction="mean")
 
     iter_counter = 0
     total_iters = epochs*(len(trainset)//batch_size)
-    lmbda = logistic_function(iter_counter, total_iters)
+    lmbda = logistic_function(iter_counter, total_iters, max_beta)
 
     midpoint = len(trainset) // (2 * batch_size)
 
@@ -78,7 +78,7 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
                                         'KLD': kl / num_iters})
                 prog_bar.update(batch_size)
 
-                lmbda = logistic_function(iter_counter, total_iters)
+                lmbda = logistic_function(iter_counter, total_iters, max_beta)
                 iter_counter += 1
 
                 if verbose and i == midpoint:
