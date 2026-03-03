@@ -137,14 +137,14 @@ class BatchedNode:
 
 
 class HVAE(nn.Module):
-    def __init__(self, input_size: int, output_size: int, symbol_library: SymbolLibrary, hidden_size: Union[None, int]=None):
+    def __init__(self, input_size: int, output_size: int, symbol_library: SymbolLibrary, hidden_size: Union[None, int]=None, max_height: int=20):
         super(HVAE, self).__init__()
 
         if hidden_size is None:
             hidden_size = output_size
 
         self.encoder = Encoder(input_size, hidden_size, output_size)
-        self.decoder = Decoder(output_size, hidden_size, input_size, symbol_library)
+        self.decoder = Decoder(output_size, hidden_size, input_size, symbol_library, max_height)
 
     def forward(self, tree: BatchedNode) -> (torch.Tensor, torch.Tensor, BatchedNode):
         mu, logvar = self.encoder(tree)
@@ -199,16 +199,21 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, output_size: int, symbol_library: SymbolLibrary):
+    def __init__(self, input_size: int, hidden_size: int, output_size: int, symbol_library: SymbolLibrary, max_height: int=20):
         super(Decoder, self).__init__()
         self.hidden_size = hidden_size
         self.z2h = nn.Linear(input_size, hidden_size)
         self.h2o = nn.Linear(hidden_size, output_size)
         self.gru = GRU122(input_size=output_size, hidden_size=hidden_size)
 
+        self.max_height = max_height
         self.symbol_library = symbol_library
         self.symbol2index = symbol_library.symbols2index()
         self.index2symbol = {i: s for s, i in self.symbol2index.items()}
+        self.leaf_symbols_mask = torch.zeros(len(self.symbol2index))
+        for s, i in self.symbol2index.items():
+            if self.symbol_library.get_type(s) in ["var", "const", "lit"]:
+                self.leaf_symbols_mask[i] = 1
 
         torch.nn.init.xavier_uniform_(self.z2h.weight)
         torch.nn.init.xavier_uniform_(self.h2o.weight)
@@ -238,18 +243,19 @@ class Decoder(nn.Module):
             batch = self.recursive_decode(hidden, mask)
             return batch.to_expr_list()
 
-    def recursive_decode(self, hidden: torch.Tensor, mask: torch.Tensor) -> BatchedNode:
+    def recursive_decode(self, hidden: torch.Tensor, mask: torch.Tensor, height: int=0) -> BatchedNode:
+        # print(height)
         prediction = F.softmax(self.h2o(hidden), dim=1)
         # Sample symbol in a given node
-        symbols, left_mask, right_mask = self.sample_symbol(prediction, mask)
+        symbols, left_mask, right_mask = self.sample_symbol(prediction, mask, height)
         left, right = self.gru(prediction, hidden)
         if torch.any(left_mask):
-            l_tree = self.recursive_decode(left, left_mask)
+            l_tree = self.recursive_decode(left, left_mask, height + 1)
         else:
             l_tree = None
 
         if torch.any(right_mask):
-            r_tree = self.recursive_decode(right, right_mask)
+            r_tree = self.recursive_decode(right, right_mask, height + 1)
         else:
             r_tree = None
 
@@ -259,11 +265,14 @@ class Decoder(nn.Module):
         node.right = r_tree
         return node
 
-    def sample_symbol(self, prediction: torch.Tensor, mask: torch.Tensor) -> (List[str], torch.Tensor, torch.Tensor):
+    def sample_symbol(self, prediction: torch.Tensor, mask: torch.Tensor, height: int) -> (List[str], torch.Tensor, torch.Tensor):
         # Select the symbol with the highest value ("probability")
         symbols = []
         left_mask = torch.clone(mask)
         right_mask = torch.clone(mask)
+
+        if height >= self.max_height:
+            prediction = prediction * self.leaf_symbols_mask
 
         for i in range(prediction.size(0)):
             if mask[i]:

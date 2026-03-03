@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 import torch
-from SRToolkit.dataset import SRBenchmark, SRDataset
+from SRToolkit.dataset import SR_benchmark, SR_dataset
 from SRToolkit.evaluation import SR_evaluator
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.optimize import minimize
@@ -36,7 +36,7 @@ class SRProblem(Problem):
 
         errors = []
         for tree in trees:
-            expr = tree.to_list("infix", self.evaluator.symbol_library)
+            expr = tree.to_list(self.evaluator.symbol_library, "infix")
             error = self.evaluator.evaluate_expr(expr)
             if error < self.best_f:
                 self.best_f = error
@@ -86,7 +86,7 @@ class RandomMutation(Mutation):
         return np.random.normal(mutation_scale * X, std).astype(np.float32)
 
 
-def symbolic_regression_run(model, approach, dataset: SRDataset, seed, population_size=40, latent_size=24, max_generations=250, verbose=True):
+def symbolic_regression_run(model, approach, dataset: SR_dataset, seed, population_size=40, latent_size=24, max_generations=250, verbose=True):
     np.random.seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
@@ -179,7 +179,7 @@ def symbolic_regression_run(model, approach, dataset: SRDataset, seed, populatio
 if __name__ == '__main__':
     # Load the ED/SR dataset
     # SRBenchmark.feynman("../data/fey_data").list_datasets(num_variables=2)
-    dataset = SRBenchmark.feynman("../data/fey_data").create_dataset("II.11.28")
+    dataset = SR_benchmark.feynman("../data/fey_data").create_dataset("II.11.28")
 
     # Load the HVAE model
     latent_size = 24

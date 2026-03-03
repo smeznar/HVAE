@@ -1,6 +1,6 @@
 import torch
 from SRToolkit.utils import tokens_to_tree, generate_n_expressions
-from SRToolkit.dataset import SRBenchmark
+from SRToolkit.dataset import SR_benchmark
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import Sampler, Dataset
@@ -40,19 +40,19 @@ class TreeDataset(Dataset):
         return len(self.train)
 
 
-def logistic_function(iter, total_iters, supremum=0.04):
-    x = iter/total_iters
+def logistic_function(it, total_iters, supremum=0.04):
+    x = it/total_iters
     return supremum/(1+50*np.exp(-10*x))
 
 
-def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbose=True):
+def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, max_beta=0.04, verbose=True):
     symbol2index = symbol_library.symbols2index()
     optimizer = Adam(model.parameters())
     criterion = CrossEntropyLoss(ignore_index=-1, reduction="mean")
 
     iter_counter = 0
     total_iters = epochs*(len(trainset)//batch_size)
-    lmbda = logistic_function(iter_counter, total_iters)
+    lmbda = logistic_function(iter_counter, total_iters, max_beta)
 
     midpoint = len(trainset) // (2 * batch_size)
 
@@ -78,7 +78,7 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
                                         'KLD': kl / num_iters})
                 prog_bar.update(batch_size)
 
-                lmbda = logistic_function(iter_counter, total_iters)
+                lmbda = logistic_function(iter_counter, total_iters, max_beta)
                 iter_counter += 1
 
                 if verbose and i == midpoint:
@@ -92,7 +92,7 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, verbos
 
 
 if __name__ == '__main__':
-    dataset = SRBenchmark.feynman("../data/fey_data").create_dataset("I.29.4")
+    dataset = SR_benchmark.feynman("../data/fey_data").create_dataset("I.12.4")
     latent_size = 24
     num_expressions = 30000
     max_expression_length = 30
