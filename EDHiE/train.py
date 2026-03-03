@@ -99,12 +99,12 @@ if __name__ == '__main__':
     model_name = "24random"
 
     # Possibly create a training set or load expressions
-    expressions = generate_n_expressions(dataset.symbols, num_expressions, max_expression_length=max_expression_length)
-    expr_tree = [tokens_to_tree(expr, dataset.symbols) for expr in expressions]
+    expressions = generate_n_expressions(dataset.symbol_library, num_expressions, max_expression_length=max_expression_length)
+    expr_tree = [tokens_to_tree(expr, dataset.symbol_library) for expr in expressions]
     # Create a training set
     trainset = TreeDataset(expr_tree)
 
     # Train the model
-    model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
-    train_hvae(model, trainset, dataset.symbols, epochs=40)
+    model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library)
+    train_hvae(model, trainset, dataset.symbol_library, epochs=40)
     torch.save(model.state_dict(), f"../params/{model_name}.pt")

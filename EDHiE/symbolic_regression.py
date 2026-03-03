@@ -106,7 +106,7 @@ def symbolic_regression_run(model, approach, dataset: SR_dataset, seed, populati
         for _ in range(population_size*max_generations):
             x = torch.normal(gaussian_distribution_mean)[None, :]
             tree = model.decode(x)[0]
-            expr = tree.to_list(dataset.symbols, "infix")
+            expr = tree.to_list(dataset.symbol_library, "infix")
             expr_score = evaluator.evaluate_expr(expr)
             if expr_score < min_score and verbose:
                 min_score = expr_score
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     # Load the HVAE model
     latent_size = 24
     model_parameters = "../params/24random.pt"
-    model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
+    model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library)
     model.load_state_dict(torch.load(model_parameters, weights_only=True))
     model.eval()
 

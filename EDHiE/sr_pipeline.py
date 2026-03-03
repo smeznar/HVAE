@@ -20,18 +20,18 @@ def EDHiE(dataset: SR_dataset, grammar: Union[str, None]=None, size_trainset: in
             if grammar is not None:
                 trainset = generate_n_expressions(grammar, size_trainset, max_expression_length=max_expression_length, verbose=verbose)
             else:
-                trainset = generate_n_expressions(dataset.symbols, size_trainset, max_expression_length=max_expression_length, verbose=verbose)
+                trainset = generate_n_expressions(dataset.symbol_library, size_trainset, max_expression_length=max_expression_length, verbose=verbose)
 
-        expr_trees = [tokens_to_tree(expr, dataset.symbols) for expr in trainset]
+        expr_trees = [tokens_to_tree(expr, dataset.symbol_library) for expr in trainset]
         trainset = TreeDataset(expr_trees)
         # Train the HVAE model
-        model = HVAE(len(dataset.symbols), latent_size, dataset.symbols, max_height)
-        train_hvae(model, trainset, dataset.symbols, epochs, batch_size, verbose)
+        model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library, max_height)
+        train_hvae(model, trainset, dataset.symbol_library, epochs, batch_size, verbose)
         if save_params_to_file is not None:
             torch.save(model.state_dict(), save_params_to_file)
         model.eval()
     else:
-        model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
+        model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library)
         model.load_state_dict(torch.load(pretrained_params, weights_only=True))
         model.eval()
 
@@ -85,18 +85,18 @@ def HVAR(dataset: SR_dataset, grammar: Union[str, None]=None, size_trainset: int
             if grammar is not None:
                 trainset = generate_n_expressions(grammar, size_trainset, max_expression_length=max_expression_length, verbose=verbose)
             else:
-                trainset = generate_n_expressions(dataset.symbols, size_trainset, max_expression_length=max_expression_length, verbose=verbose)
+                trainset = generate_n_expressions(dataset.symbol_library, size_trainset, max_expression_length=max_expression_length, verbose=verbose)
 
-        expr_trees = [tokens_to_tree(expr, dataset.symbols) for expr in trainset]
+        expr_trees = [tokens_to_tree(expr, dataset.symbol_library) for expr in trainset]
         trainset = TreeDataset(expr_trees)
         # Train the HVAE model
-        model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
-        train_hvae(model, trainset, dataset.symbols, epochs, batch_size, verbose)
+        model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library)
+        train_hvae(model, trainset, dataset.symbol_library, epochs, batch_size, verbose)
         if save_params_to_file is not None:
             torch.save(model.state_dict(), save_params_to_file)
         model.eval()
     else:
-        model = HVAE(len(dataset.symbols), latent_size, dataset.symbols)
+        model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library)
         model.load_state_dict(torch.load(pretrained_params, weights_only=True))
         model.eval()
 

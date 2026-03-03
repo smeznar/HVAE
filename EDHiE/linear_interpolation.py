@@ -23,17 +23,17 @@ def interpolateAB(model, treeA, treeB, symbol2index, steps=5):
 
 if __name__ == '__main__':
     dataset = SRBenchmark.feynman("../data/fey_data").create_dataset("I.29.4")
-    symbol2index = dataset.symbols.symbols2index()
+    symbol2index = dataset.symbol_library.symbols2index()
 
     model_parameters = "../params/24random.pt"
-    model = HVAE(len(dataset.symbols), 24, dataset.symbols)
+    model = HVAE(len(dataset.symbol_library), 24, dataset.symbol_library)
     model.load_state_dict(torch.load(model_parameters, weights_only=True))
     model.eval()
 
     # Expressions we want to interpolate between
-    expressions = generate_n_expressions(dataset.symbols, 2, max_expression_length=30)
-    treeA = tokens_to_tree(expressions[0], dataset.symbols)
-    treeB = tokens_to_tree(expressions[1], dataset.symbols)
+    expressions = generate_n_expressions(dataset.symbol_library, 2, max_expression_length=30)
+    treeA = tokens_to_tree(expressions[0], dataset.symbol_library)
+    treeB = tokens_to_tree(expressions[1], dataset.symbol_library)
 
     # Number of steps in the interpolation (inclusive with expressions A and B)
     steps = 5
