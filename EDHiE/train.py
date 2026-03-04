@@ -42,7 +42,7 @@ class TreeDataset(Dataset):
 
 def logistic_function(it, total_iters, supremum=0.04):
     x = it/total_iters
-    return supremum/(1+50*np.exp(-10*x))
+    return x*supremum
 
 
 def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, max_beta=0.04, verbose=True):
@@ -58,7 +58,7 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, max_be
 
     for epoch in range(epochs):
         sampler = TreeBatchSampler(batch_size, len(trainset))
-        bce, kl, total, num_iters = 0, 0, 0, 0
+        bce, kl, los, total, num_iters = 0, 0, 0, 0, 0
 
         with tqdm(total=len(trainset), desc=f'Training HVAE - Epoch: {epoch + 1}/{epochs}', unit='chunks') as prog_bar:
             for i, tree_ids in enumerate(sampler):
@@ -72,8 +72,9 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, max_be
                 loss.backward()
                 optimizer.step()
                 num_iters += 1
+                los += (bcel.detach().item() + lmbda*kll.detach().item())
                 prog_bar.set_postfix(**{'run:': "HVAE",
-                                        'loss': (bce+kl) / num_iters,
+                                        'loss': los / num_iters,
                                         'BCE': bce / num_iters,
                                         'KLD': kl / num_iters})
                 prog_bar.update(batch_size)
@@ -94,7 +95,8 @@ def train_hvae(model, trainset, symbol_library, epochs=20, batch_size=32, max_be
 if __name__ == '__main__':
     dataset = SR_benchmark.feynman("../data/fey_data").create_dataset("I.12.4")
     latent_size = 24
-    num_expressions = 30000
+    num_expressions = 20000
+    max_beta = 0.035
     max_expression_length = 30
     model_name = "24random"
 
@@ -106,5 +108,5 @@ if __name__ == '__main__':
 
     # Train the model
     model = HVAE(len(dataset.symbol_library), latent_size, dataset.symbol_library)
-    train_hvae(model, trainset, dataset.symbol_library, epochs=40)
+    train_hvae(model, trainset, dataset.symbol_library, epochs=20, max_beta=max_beta)
     torch.save(model.state_dict(), f"../params/{model_name}.pt")

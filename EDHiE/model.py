@@ -60,8 +60,8 @@ class BatchedNode:
         pred = self.get_prediction()
         target = self.get_target()
         BCE = criterion(pred, target)
-        KLD = (lmbda * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()))/mu.size(0)
-        return BCE + KLD, BCE, KLD
+        KLD = (-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()))/mu.size(0)
+        return BCE + lmbda*KLD, BCE, KLD
 
     def create_target(self):
         target = torch.zeros((len(self.symbols), len(self.symbol2index)))
